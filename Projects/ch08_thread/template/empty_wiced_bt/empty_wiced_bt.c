@@ -68,6 +68,10 @@ static wiced_bt_dev_status_t  app_bt_management_callback    ( wiced_bt_managemen
 wiced_result_t app_set_advertisement_data(void);
 wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wiced_bt_gatt_event_data_t *p_data );
 
+/*******************************************************************
+ * Global Variables
+ ******************************************************************/
+wiced_thread_t* led_thread = wiced_rtos_create_thread();
 
 /*******************************************************************************
 * Function Name: void led_task(uint32_t)
@@ -164,8 +168,6 @@ wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t event, wice
         // wiced_bt_start_advertisements(BTM_BLE_ADVERT_UNDIRECTED_HIGH, BLE_ADDR_PUBLIC, NULL));
 
         /* TODO - further initialization here */
-
-        wiced_thread_t* led_thread = wiced_rtos_create_thread();
 
 		wiced_rtos_init_thread(
 				led_thread,		// Thread handle
