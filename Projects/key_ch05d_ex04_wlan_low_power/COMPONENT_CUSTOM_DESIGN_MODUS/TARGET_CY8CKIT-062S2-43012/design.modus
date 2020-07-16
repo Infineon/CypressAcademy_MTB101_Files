@@ -371,10 +371,10 @@
                     </Personality>
                 </Block>
                 <Block location="srss[0].power[0]">
-                    <Personality template="mxs40power" version="1.2">
+                    <Personality template="mxs40power" version="1.3">
                         <Param id="pwrMode" value="LDO_1_1"/>
                         <Param id="actPwrMode" value="ULP"/>
-                        <Param id="coreRegulator" value="CY_SYSPM_LDO_MODE_DISABLED"/>
+                        <Param id="coreRegulator" value="CY_SYSPM_BUCK_MODE_NORMAL"/>
                         <Param id="pmicEnable" value="false"/>
                         <Param id="backupSrc" value="VDDD"/>
                         <Param id="idlePwrMode" value="CY_CFG_PWR_MODE_DEEPSLEEP"/>
@@ -469,6 +469,42 @@
                         <Param id="filterNonTLSProt" value="CY_PF_PROTOCOL_TCP"/>
                         <Param id="filterNonTLSDir" value="PF_PN_PORT_DEST"/>
                         <Param id="minKeepFilt" value="false"/>
+                        <Param id="config0" value="false"/>
+                        <Param id="filter0_type" value="CY_PF_PORT_FILTER"/>
+                        <Param id="filter0_action" value="CY_PF_ACTION_KEEP"/>
+                        <Param id="filter0_prot" value="CY_PF_PROTOCOL_TCP"/>
+                        <Param id="filter0_dir" value="PF_PN_PORT_DEST"/>
+                        <Param id="filter0_ether_type" value="0x800"/>
+                        <Param id="filter0_ip_type" value="0"/>
+                        <Param id="filter0_port" value="1024"/>
+                        <Param id="filter0_end_port" value="1023"/>
+                        <Param id="config1" value="false"/>
+                        <Param id="filter1_type" value="CY_PF_PORT_FILTER"/>
+                        <Param id="filter1_action" value="CY_PF_ACTION_KEEP"/>
+                        <Param id="filter1_prot" value="CY_PF_PROTOCOL_TCP"/>
+                        <Param id="filter1_dir" value="PF_PN_PORT_DEST"/>
+                        <Param id="filter1_ether_type" value="0x800"/>
+                        <Param id="filter1_ip_type" value="0"/>
+                        <Param id="filter1_port" value="1024"/>
+                        <Param id="filter1_end_port" value="1023"/>
+                        <Param id="config2" value="false"/>
+                        <Param id="filter2_type" value="CY_PF_PORT_FILTER"/>
+                        <Param id="filter2_action" value="CY_PF_ACTION_KEEP"/>
+                        <Param id="filter2_prot" value="CY_PF_PROTOCOL_TCP"/>
+                        <Param id="filter2_dir" value="PF_PN_PORT_DEST"/>
+                        <Param id="filter2_ether_type" value="0x800"/>
+                        <Param id="filter2_ip_type" value="0"/>
+                        <Param id="filter2_port" value="1024"/>
+                        <Param id="filter2_end_port" value="1023"/>
+                        <Param id="config3" value="false"/>
+                        <Param id="filter3_type" value="CY_PF_PORT_FILTER"/>
+                        <Param id="filter3_action" value="CY_PF_ACTION_KEEP"/>
+                        <Param id="filter3_prot" value="CY_PF_PROTOCOL_TCP"/>
+                        <Param id="filter3_dir" value="PF_PN_PORT_DEST"/>
+                        <Param id="filter3_ether_type" value="0x800"/>
+                        <Param id="filter3_ip_type" value="0"/>
+                        <Param id="filter3_port" value="1024"/>
+                        <Param id="filter3_end_port" value="1023"/>
                         <Param id="config4" value="false"/>
                         <Param id="filter4_type" value="CY_PF_PORT_FILTER"/>
                         <Param id="filter4_action" value="CY_PF_ACTION_KEEP"/>

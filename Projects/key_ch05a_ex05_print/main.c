@@ -62,10 +62,6 @@ int main(void)
     CY_RETARGET_IO_BAUDRATE);
     CY_ASSERT(result == CY_RSLT_SUCCESS);
 
-
-    // Exercise 06
-    result = cy_rgb_led_init(CYBSP_LED_RGB_RED, CYBSP_LED_RGB_GREEN, CYBSP_LED_RGB_BLUE, CY_RGB_LED_ACTIVE_LOW);
-
     if (result != CY_RSLT_SUCCESS)
     {
     CY_ASSERT(0);
@@ -78,17 +74,6 @@ int main(void)
 
     for (;;)
     {
-    	// Exercise 06
-    	printf( "Color is %s\r\n", DEFINE_TO_STRING(CY_RGB_LED_COLOR_YELLOW));
-    	cy_rgb_led_on(CY_RGB_LED_COLOR_YELLOW, CY_RGB_LED_MAX_BRIGHTNESS);
-    	Cy_SysLib_Delay( 1000 );
-    	printf( "Color is %s\r\n", DEFINE_TO_STRING(CY_RGB_LED_COLOR_PURPLE));
-    	cy_rgb_led_on(CY_RGB_LED_COLOR_PURPLE, CY_RGB_LED_MAX_BRIGHTNESS);
-    	Cy_SysLib_Delay( 1000 );
-    	printf( "Color is %s\r\n", DEFINE_TO_STRING(CY_RGB_LED_COLOR_CYAN));
-    	cy_rgb_led_on(CY_RGB_LED_COLOR_CYAN, CY_RGB_LED_MAX_BRIGHTNESS);
-    	Cy_SysLib_Delay( 1000 );
-
     }
 }
 

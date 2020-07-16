@@ -144,8 +144,7 @@ int main(void)
 
     for (;;)
     {
-    	cyhal_syspm_sleep();
-    	if (capsense_scan_complete)
+        if (capsense_scan_complete)
         {
             /* Process all widgets */
             Cy_CapSense_ProcessAllWidgets(&cy_capsense_context);
@@ -166,6 +165,7 @@ int main(void)
             /* Initiate next scan */
             Cy_CapSense_ScanAllWidgets(&cy_capsense_context);
         }
+        cyhal_syspm_sleep();
     }
 }
 

@@ -5,9 +5,9 @@
 * Pin configuration
 * This file was automatically generated and should not be modified.
 * Tools Package 2.1.0.1266
-* psoc6pdl 1.5.2.3446
+* psoc6pdl 1.6.0.4266
 * personalities_2.0 2.0.0.0
-* udd 1.2.0.136
+* udd 1.2.0.370
 *
 ********************************************************************************
 * Copyright 2020 Cypress Semiconductor Corporation
@@ -56,6 +56,9 @@ extern "C" {
 	#define CYBSP_WCO_IN_HAL_PORT_PIN P0_0
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
+	#define CYBSP_WCO_IN P0_0
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	#define CYBSP_WCO_IN_HAL_IRQ CYHAL_GPIO_IRQ_NONE
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
@@ -78,6 +81,9 @@ extern "C" {
 #define CYBSP_WCO_OUT_IRQ ioss_interrupts_gpio_0_IRQn
 #if defined (CY_USING_HAL)
 	#define CYBSP_WCO_OUT_HAL_PORT_PIN P0_1
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	#define CYBSP_WCO_OUT P0_1
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
 	#define CYBSP_WCO_OUT_HAL_IRQ CYHAL_GPIO_IRQ_NONE
@@ -104,6 +110,9 @@ extern "C" {
 	#define CYBSP_CSD_RX_HAL_PORT_PIN P1_0
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
+	#define CYBSP_CSD_RX P1_0
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	#define CYBSP_CSD_RX_HAL_IRQ CYHAL_GPIO_IRQ_NONE
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
@@ -126,6 +135,9 @@ extern "C" {
 #define CYBSP_WIFI_HOST_WAKE_IRQ ioss_interrupts_gpio_4_IRQn
 #if defined (CY_USING_HAL)
 	#define CYBSP_WIFI_HOST_WAKE_HAL_PORT_PIN P4_1
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	#define CYBSP_WIFI_HOST_WAKE P4_1
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
 	#define CYBSP_WIFI_HOST_WAKE_HAL_IRQ CYHAL_GPIO_IRQ_RISE
@@ -152,6 +164,9 @@ extern "C" {
 	#define CYBSP_SWO_HAL_PORT_PIN P6_4
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
+	#define CYBSP_SWO P6_4
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	#define CYBSP_SWO_HAL_IRQ CYHAL_GPIO_IRQ_NONE
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
@@ -174,6 +189,9 @@ extern "C" {
 #define CYBSP_SWDIO_IRQ ioss_interrupts_gpio_6_IRQn
 #if defined (CY_USING_HAL)
 	#define CYBSP_SWDIO_HAL_PORT_PIN P6_6
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	#define CYBSP_SWDIO P6_6
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
 	#define CYBSP_SWDIO_HAL_IRQ CYHAL_GPIO_IRQ_NONE
@@ -200,6 +218,9 @@ extern "C" {
 	#define CYBSP_SWDCK_HAL_PORT_PIN P6_7
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
+	#define CYBSP_SWDCK P6_7
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	#define CYBSP_SWDCK_HAL_IRQ CYHAL_GPIO_IRQ_NONE
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
@@ -222,6 +243,9 @@ extern "C" {
 #define CYBSP_CINA_IRQ ioss_interrupts_gpio_7_IRQn
 #if defined (CY_USING_HAL)
 	#define CYBSP_CINA_HAL_PORT_PIN P7_1
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	#define CYBSP_CINA P7_1
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
 	#define CYBSP_CINA_HAL_IRQ CYHAL_GPIO_IRQ_NONE
@@ -248,6 +272,9 @@ extern "C" {
 	#define CYBSP_CINB_HAL_PORT_PIN P7_2
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
+	#define CYBSP_CINB P7_2
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	#define CYBSP_CINB_HAL_IRQ CYHAL_GPIO_IRQ_NONE
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
@@ -270,6 +297,9 @@ extern "C" {
 #define CYBSP_CMOD_IRQ ioss_interrupts_gpio_7_IRQn
 #if defined (CY_USING_HAL)
 	#define CYBSP_CMOD_HAL_PORT_PIN P7_7
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	#define CYBSP_CMOD P7_7
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
 	#define CYBSP_CMOD_HAL_IRQ CYHAL_GPIO_IRQ_NONE
@@ -296,6 +326,9 @@ extern "C" {
 	#define CYBSP_CSD_BTN0_HAL_PORT_PIN P8_1
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
+	#define CYBSP_CSD_BTN0 P8_1
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	#define CYBSP_CSD_BTN0_HAL_IRQ CYHAL_GPIO_IRQ_NONE
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
@@ -318,6 +351,9 @@ extern "C" {
 #define CYBSP_CSD_BTN1_IRQ ioss_interrupts_gpio_8_IRQn
 #if defined (CY_USING_HAL)
 	#define CYBSP_CSD_BTN1_HAL_PORT_PIN P8_2
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	#define CYBSP_CSD_BTN1 P8_2
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
 	#define CYBSP_CSD_BTN1_HAL_IRQ CYHAL_GPIO_IRQ_NONE
@@ -344,6 +380,9 @@ extern "C" {
 	#define CYBSP_CSD_SLD0_HAL_PORT_PIN P8_3
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
+	#define CYBSP_CSD_SLD0 P8_3
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	#define CYBSP_CSD_SLD0_HAL_IRQ CYHAL_GPIO_IRQ_NONE
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
@@ -366,6 +405,9 @@ extern "C" {
 #define CYBSP_CSD_SLD1_IRQ ioss_interrupts_gpio_8_IRQn
 #if defined (CY_USING_HAL)
 	#define CYBSP_CSD_SLD1_HAL_PORT_PIN P8_4
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	#define CYBSP_CSD_SLD1 P8_4
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
 	#define CYBSP_CSD_SLD1_HAL_IRQ CYHAL_GPIO_IRQ_NONE
@@ -392,6 +434,9 @@ extern "C" {
 	#define CYBSP_CSD_SLD2_HAL_PORT_PIN P8_5
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
+	#define CYBSP_CSD_SLD2 P8_5
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	#define CYBSP_CSD_SLD2_HAL_IRQ CYHAL_GPIO_IRQ_NONE
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
@@ -416,6 +461,9 @@ extern "C" {
 	#define CYBSP_CSD_SLD3_HAL_PORT_PIN P8_6
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
+	#define CYBSP_CSD_SLD3 P8_6
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	#define CYBSP_CSD_SLD3_HAL_IRQ CYHAL_GPIO_IRQ_NONE
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
@@ -438,6 +486,9 @@ extern "C" {
 #define CYBSP_CSD_SLD4_IRQ ioss_interrupts_gpio_8_IRQn
 #if defined (CY_USING_HAL)
 	#define CYBSP_CSD_SLD4_HAL_PORT_PIN P8_7
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	#define CYBSP_CSD_SLD4 P8_7
 #endif //defined (CY_USING_HAL)
 #if defined (CY_USING_HAL)
 	#define CYBSP_CSD_SLD4_HAL_IRQ CYHAL_GPIO_IRQ_NONE

@@ -5,9 +5,9 @@
 * System configuration
 * This file was automatically generated and should not be modified.
 * Tools Package 2.1.0.1266
-* psoc6pdl 1.5.2.3446
+* psoc6pdl 1.6.0.4266
 * personalities_2.0 2.0.0.0
-* udd 1.2.0.136
+* udd 1.2.0.370
 *
 ********************************************************************************
 * Copyright 2020 Cypress Semiconductor Corporation
@@ -31,6 +31,8 @@
 
 #include "cycfg_notices.h"
 #include "cy_sysclk.h"
+#include "cy_pra.h"
+#include "cy_pra_cfg.h"
 #include "cy_systick.h"
 #if defined (CY_USING_HAL)
 	#include "cyhal_hwmgr.h"
@@ -50,12 +52,15 @@ extern "C" {
 #define srss_0_clock_0_fll_0_ENABLED 1U
 #define srss_0_clock_0_hfclk_0_ENABLED 1U
 #define CY_CFG_SYSCLK_CLKHF0 0UL
+#define CY_CFG_SYSCLK_CLKHF0_CLKPATH_NUM 0UL
 #define srss_0_clock_0_hfclk_4_ENABLED 1U
 #define CY_CFG_SYSCLK_CLKHF4 4UL
+#define CY_CFG_SYSCLK_CLKHF4_CLKPATH_NUM 0UL
 #define srss_0_clock_0_ilo_0_ENABLED 1U
 #define srss_0_clock_0_imo_0_ENABLED 1U
 #define srss_0_clock_0_lfclk_0_ENABLED 1U
 #define CY_CFG_SYSCLK_CLKLF_FREQ_HZ 32768
+#define CY_CFG_SYSCLK_CLKLF_SOURCE CY_SYSCLK_CLKLF_IN_WCO
 #define srss_0_clock_0_pathmux_0_ENABLED 1U
 #define srss_0_clock_0_pathmux_1_ENABLED 1U
 #define srss_0_clock_0_pathmux_2_ENABLED 1U

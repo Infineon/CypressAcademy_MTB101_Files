@@ -41,6 +41,7 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
+#include "queue.h"
 #include "wiced_bt_stack.h"
 
 #include "app_bt_cfg.h"
@@ -48,7 +49,7 @@
 
 #include "cy_em_eeprom.h"
 
-/* TODO Ex 01: Include header file for GATT database */
+/* Include header file for GATT database */
 #include "cycfg_gatt_db.h"
 
 /*******************************************************************
@@ -58,7 +59,7 @@
  * sides of the connection (the device and the phone). If this is false, the device will
  * not ask for user validation so the user will only need to verify on the phone side.
  */
-#define USE_2SIDE_NUMERIC_VERIFICATION			false
+#define USE_2SIDE_NUMERIC_VERIFICATION			true
 
 #define TASK_STACK_SIZE (4096u)
 #define	TASK_PRIORITY 	(5u)
@@ -94,6 +95,10 @@
 #define EMEEPROM_AUXILIARTY_FLASH   			(1u)
 #define FLASH_REGION_TO_USE     				EMEEPROM_AUXILIARTY_FLASH
 
+/* Queue Parameters */
+#define QUEUE_LENGTH 		(1)
+#define ITEM_SIZE 			(sizeof(bool))
+
 /*******************************************************************
  * Function Prototypes
  ******************************************************************/
@@ -107,9 +112,10 @@ static void						app_set_advertisement_data( void );
 
 static void 					print_ble_address(wiced_bt_device_address_t bdadr);
 
-/* TODO Ex 02: Button callback function declaration and counter task function declaration */
+/* Button callback function declaration and counter task function declaration */
 static void button_cback(void *handler_arg, cyhal_gpio_irq_event_t event);
 static void counter_task(void * arg);
+static void numeric_comparison_task(void * arg);
 
 static void rx_cback(void *handler_arg, cyhal_uart_event_t event); /* Callback for data received from UART */
 static void print_array(void * to_print, uint16_t len);
@@ -118,11 +124,14 @@ static void print_array(void * to_print, uint16_t len);
  * Global/Static Variables
  ******************************************************************/
 
-/* TODO Ex 02: Add global variable for connection ID */
+/* Add global variable for connection ID */
 uint16_t connection_id = 0;
 
-/* TODO Ex 02: Add global variable for counter task handle */
+/* Add global variables for task handles */
 TaskHandle_t CounterTaskHandle = NULL;
+TaskHandle_t NumericComparisonTaskHandle = NULL;
+
+bool compare_value = WICED_FALSE;	// Response from numeric comparison
 
 cyhal_pwm_t pwm_obj;
 
@@ -191,7 +200,7 @@ int main(void)
     cyhal_pwm_set_duty_cycle(&pwm_obj, PWM_OFF_DUTY, PWM_BONDING_FREQUENCY);
     cyhal_pwm_start(&pwm_obj);
 
-    /* TODO Ex 02: Configure CYBSP_USER_BTN for a falling edge interrupt */
+    /* Configure CYBSP_USER_BTN for a falling edge interrupt */
     cyhal_gpio_init(CYBSP_USER_BTN, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
     cyhal_gpio_register_callback(CYBSP_USER_BTN, button_cback, NULL);
     cyhal_gpio_enable_event(CYBSP_USER_BTN, CYHAL_GPIO_IRQ_FALL, 3, true);
@@ -242,13 +251,21 @@ int main(void)
         printf("Bluetooth Stack Initialization failed!!\n");
     }
 
-    /* TODO Ex 02: Start task to handle Counter notifications */
+    /* Start task to handle Counter notifications */
     xTaskCreate (counter_task,
     		"CounterTask",
 			TASK_STACK_SIZE,
 			NULL,
 			TASK_PRIORITY,
 			&CounterTaskHandle);
+
+    /* Start task to handle numeric comparison response */
+    xTaskCreate (numeric_comparison_task,
+    		"NumericResponseTask",
+			TASK_STACK_SIZE,
+			NULL,
+			TASK_PRIORITY,
+			&NumericComparisonTaskHandle);
 
     /* Start the FreeRTOS scheduler */
     vTaskStartScheduler() ;
@@ -303,15 +320,15 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 			        bonded = WICED_TRUE; /* We have bonding information already, so don't go into bonding mode */
 			    }
 
-				/* TODO Ex 01: Register GATT callback */
+				/* Register GATT callback */
 				wiced_bt_gatt_register( app_gatt_callback );
 			    printf("GATT event Handler registration status: %s \n",gatt_status_name(status));
 
-			    /* TODO Ex 01: Initialize the GATT database */
+			    /* Initialize the GATT database */
 			    wiced_bt_gatt_db_init( gatt_database, gatt_database_len, NULL );
 			    printf("GATT database initiliazation status: %s \n",gatt_status_name(status));
 
-				/* TODO Ex 01: Enable/disable pairing */
+				/* Enable/disable pairing */
 			    wiced_bt_set_pairable_mode( WICED_TRUE, WICED_FALSE ); /* Enable pairing */
 
 				/* Create the packet and begin advertising */
@@ -534,7 +551,7 @@ static wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wice
             	print_ble_address(p_conn->bd_addr);
             	printf("Connection ID %d\n", p_conn->conn_id );
 
-				/* TODO Ex 02: Handle the connection */
+				/* Handle the connection */
             	connection_id = p_conn->conn_id;
 
 				/* Save the remote bd_addr into hostinfo because, at this point, we know that is good data */
@@ -547,7 +564,7 @@ static wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wice
 	            print_ble_address(p_conn->bd_addr);
 	            printf("Connection ID '%d', Reason '%s'\n", p_conn->conn_id, gatt_disconn_reason_name(p_conn->reason) );
 
-				/* TODO Ex 02: Handle the disconnection */
+				/* Handle the disconnection */
 	            connection_id = 0;
 
 	            /* Reset the CCCD value so that on a reconnect CCCD will be off */
@@ -655,7 +672,7 @@ static wiced_bt_gatt_status_t	app_gatt_get_value( wiced_bt_gatt_read_t *p_data )
 			memcpy(p_val, app_gatt_db_ext_attr_tbl[i].p_data + offset, len_to_copy);
 			res = WICED_BT_GATT_SUCCESS;
 
-			// TODO Ex 01: Add case for any action required when this attribute is read
+			// Add case for any action required when this attribute is read
 			switch ( attr_handle )
 			{
 				/* Nothing to do here */
@@ -697,8 +714,8 @@ static wiced_bt_gatt_status_t	app_gatt_set_value( wiced_bt_gatt_write_t *p_data 
                 memcpy(app_gatt_db_ext_attr_tbl[i].p_data, p_val, len);
     			res = WICED_BT_GATT_SUCCESS;
 
-                // TODO Ex 01: Add case for action required when this attribute is written
-                // TODO Ex 02: Add case to print message when notifications are enabled/disabled
+                // Add case for action required when this attribute is written
+                // Add case to print message when notifications are enabled/disabled
                 // For example you may need to write the value into EERPOM if it needs to be persistent
                 switch ( attr_handle )
                 {
@@ -735,7 +752,7 @@ static wiced_bt_gatt_status_t	app_gatt_set_value( wiced_bt_gatt_write_t *p_data 
 }
 
 
-/* TODO Ex 02: Counter task to send a notification */
+/* Counter task to send a notification */
 /**************************************************************************************************
 * Function Name: counter_task(void * arg)
 ***************************************************************************************************
@@ -788,7 +805,45 @@ static void counter_task(void * arg)
 	}
 }
 
-/* TODO Ex 02: Button callback function */
+
+/**************************************************************************************************
+* Function Name: numeric_comparison_task(void * arg)
+***************************************************************************************************
+* Summary:
+*   This task waits for the user to input a response during numeric comparison. It then sends the
+*   response to the stack depending on whether the user entered 'y' or 'n'.
+*
+* Parameters:
+*   none
+*
+* Return:
+*   void
+*
+**************************************************************************************************/
+static void numeric_comparison_task(void * arg)
+{
+	for(;;)
+	{
+		// Wait for a message from the UART RX callback
+		if(ulTaskNotifyTake( pdFALSE, portMAX_DELAY )) // return value of 1 means is was not a timeout
+		{
+			// Sent the appropriate response based on the queue value
+			if (compare_value == true)
+			{
+				printf("Numeric Values Match\n");
+				wiced_bt_dev_confirm_req_reply(WICED_BT_SUCCESS, bondinfo.remote_bda );
+			}
+			else if (compare_value == false)
+			{
+				printf("Numeric Values Don't Match\n");
+				wiced_bt_dev_confirm_req_reply(WICED_BT_ERROR, bondinfo.remote_bda );
+			}
+		}
+	}
+}
+
+
+/* Button callback function */
 /**************************************************************************************************
 * Function Name: button_cback(void *handler_arg, cyhal_gpio_irq_event_t event)
 ***************************************************************************************************/
@@ -815,9 +870,12 @@ static void button_cback(void *handler_arg, cyhal_gpio_irq_event_t event)
 ********************************************************************************/
 void rx_cback(void *handler_arg, cyhal_uart_event_t event)
 {
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
 	(void) handler_arg;
 
 	uint8_t readbyte;
+	bool notify_value;
 
     /* Read one byte from the buffer with a 100ms timeout */
     cyhal_uart_getc(&cy_retarget_io_uart_obj , &readbyte, 100);
@@ -855,15 +913,23 @@ void rx_cback(void *handler_arg, cyhal_uart_event_t event)
 	#if (USE_2SIDE_NUMERIC_VERIFICATION==true) // 2 sided verification
 	else if (readbyte == 'y')
 	{
-		printf("Numeric Values Match\n");
-		wiced_bt_dev_confirm_req_reply(WICED_BT_SUCCESS, bondinfo.remote_bda );
+		// Set the value for the response and unlock the thread that will send the response
+		compare_value = true;
+		vTaskNotifyGiveFromISR( NumericComparisonTaskHandle, &xHigherPriorityTaskWoken );
 	}
 	else if (readbyte == 'n')
 	{
-		printf("Numeric Values Don't Match\n");
-		wiced_bt_dev_confirm_req_reply(WICED_BT_ERROR, bondinfo.remote_bda );
+		// Set the value for the response and unlock the thread that will send the response
+		compare_value = false;
+		vTaskNotifyGiveFromISR( NumericComparisonTaskHandle, &xHigherPriorityTaskWoken );
 	}
 	#endif
+
+	/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+	should be performed to ensure the interrupt returns directly to the highest
+	priority task.  The macro used for this purpose is dependent on the port in
+	use and may be called portEND_SWITCHING_ISR(). */
+	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
 

@@ -89,20 +89,20 @@ cyhal_ezi2c_cfg_t sEzI2C_cfg;
 /* Parameter structure for Sleep callback function */
 cy_stc_syspm_callback_params_t CapSenseDeepSleepParams =
 {
-	CYBSP_CSD_HW, 		// CapSense HW block base address
-	&cy_capsense_context  	// CapSense context
+    CYBSP_CSD_HW,           // CapSense HW block base address
+    &cy_capsense_context    // CapSense context
 };
 
 /* Callback Structure for Sleep callback function*/
 cy_stc_syspm_callback_t CapSenseDeepSleep =
 {
-		&Cy_CapSense_DeepSleepCallback, //Provided by CapSense API
-		CY_SYSPM_DEEPSLEEP,  // Callback for Deep Sleep Events
-		0U, // Callback is executed for all DeepSleep events
-		&CapSenseDeepSleepParams, // Callback parameters structure
-		NULL, // No previous callback in the list
-		NULL, // No next callback in the list
-		0U    // Priority order
+    &Cy_CapSense_DeepSleepCallback,  //Provided by CapSense API
+    CY_SYSPM_DEEPSLEEP,  // Callback for Deep Sleep Events
+    0U,    // Callback is executed for all DeepSleep events
+    &CapSenseDeepSleepParams,  // Callback parameters structure
+    NULL,  // No previous callback in the list
+    NULL,  // No next callback in the list
+    0U     // Priority order
 };
 
 

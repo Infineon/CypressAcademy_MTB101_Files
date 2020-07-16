@@ -42,6 +42,7 @@
 #include "cyhal.h"
 #include "cybsp.h"
 #include "GUI.h"
+#include "cy8ckit_028_tft.h"
 
 int main(void)
 {
@@ -55,6 +56,9 @@ int main(void)
     }
 
     __enable_irq();
+
+    /* Initialize the CY8CKIT_028_TFT board */
+    cy8ckit_028_tft_init (NULL, NULL, NULL, NULL);
 
     GUI_Init();
        GUI_SetColor(GUI_WHITE);

@@ -5,9 +5,9 @@
 * Connectivity Wi-Fi configuration
 * This file was automatically generated and should not be modified.
 * Tools Package 2.1.0.1266
-* psoc6pdl 1.5.2.3446
+* psoc6pdl 1.6.0.4266
 * personalities_2.0 2.0.0.0
-* udd 1.2.0.136
+* udd 1.2.0.370
 *
 ********************************************************************************
 * Copyright 2020 Cypress Semiconductor Corporation
@@ -33,7 +33,6 @@
 #include "cy_lpa_compat.h"
 #include "cy_lpa_wifi_ol.h"
 #include "cy_lpa_wifi_ol_common.h"
-#include "cy_lpa_wifi_pf_ol.h"
 #include "cycfg_pins.h"
 
 #if defined(__cplusplus)

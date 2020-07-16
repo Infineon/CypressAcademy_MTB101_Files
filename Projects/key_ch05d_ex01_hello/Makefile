@@ -47,7 +47,7 @@ TOOLCHAIN=GCC_ARM
 #
 # Debug   -- build with minimal optimizations, focus on debugging.
 # Release -- build with full optimizations
-CONFIG=Debug
+CONFIG=Release
 
 # If set to "true" or "1", display full command-lines when building.
 VERBOSE=
