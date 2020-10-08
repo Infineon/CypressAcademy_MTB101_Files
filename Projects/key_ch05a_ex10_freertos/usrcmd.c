@@ -37,8 +37,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern ntshell_t ntshell;
-extern uint led_rate;
+#include "ntshell.h"
+#include "ntlibc.h"
+#include "psoc6_ntshell_port.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+
+static ntshell_t ntshell;
 
 typedef int (*USRCMDFUNC)(int argc, char **argv);
 
@@ -46,9 +52,16 @@ static int usrcmd_ntopt_callback(int argc, char **argv, void *extobj);
 static int usrcmd_help(int argc, char **argv);
 static int usrcmd_info(int argc, char **argv);
 static int usrcmd_clear(int argc, char **argv);
-static int usrcmd_printargs(int argc, char **argv);
-static int usrcmd_led_rate(int argc, char **argv);
+static int usrcmd_pargs(int argc, char **argv);
+static int usrcmd_ledrate(int argc, char **argv);
 
+uint ledrate = 100;
+
+#ifdef configUSE_TRACE_FACILITY
+#if configUSE_STATS_FORMATTING_FUNCTIONS ==1
+static int usrcmd_list(int argc, char **argv);
+#endif
+#endif
 
 typedef struct {
     char *cmd;
@@ -60,10 +73,31 @@ static const cmd_table_t cmdlist[] = {
     { "help", "This is a description text string for help command.", usrcmd_help },
     { "info", "This is a description text string for info command.", usrcmd_info },
     { "clear", "Clear the screen", usrcmd_clear },
-    { "printargs","print the list of arguments", usrcmd_printargs},
-	{ "led_rate", "Enter the LED toggle rate in ms", usrcmd_led_rate},
-
+    { "pargs","print the list of arguments", usrcmd_pargs},
+	{ "ledrate","Change the LED blink rate to the specified rate in ms. Usage: ledrate <rate> ", usrcmd_ledrate},
+#ifdef configUSE_TRACE_FACILITY 
+#if configUSE_STATS_FORMATTING_FUNCTIONS ==1
+    { "tasks","print the list of RTOS Tasks", usrcmd_list},
+#endif
+#endif
 };
+
+
+void usrcmd_task()
+{
+
+  setvbuf(stdin, NULL, _IONBF, 0);
+  printf("Started user command task with NT Shell\n");
+  ntshell_init(
+	       &ntshell,
+	       ntshell_read,
+	       ntshell_write,
+	       ntshell_callback,
+	       (void *)&ntshell);
+  ntshell_set_prompt(&ntshell, "AnyCloud> ");
+  vtsend_erase_display(&ntshell.vtsend);
+  ntshell_execute(&ntshell);
+}
 
 int usrcmd_execute(const char *text)
 {
@@ -126,7 +160,7 @@ static int usrcmd_clear(int argc, char **argv)
     return 0;
 }
 
-static int usrcmd_printargs(int argc, char **argv)
+static int usrcmd_pargs(int argc, char **argv)
 {
     printf("ARGC = %d\n",argc);
 
@@ -138,11 +172,34 @@ static int usrcmd_printargs(int argc, char **argv)
 
 }
 
-static int usrcmd_led_rate(int argc, char **argv)
+static int usrcmd_ledrate(int argc, char **argv)
 {
-	if(argc > 1) /* Make sure a value was passed */
+	if(argc > 1)
 	{
-		led_rate = atoi(argv[1]);
+		ledrate = atoi(argv[1]);
 	}
+	else
+	{
+		printf("You must provide an LED blink rate in ms\n");
+	}
+	return 0;
+}
+
+#ifdef configUSE_TRACE_FACILITY
+#if configUSE_STATS_FORMATTING_FUNCTIONS ==1
+static int usrcmd_list(int argc,char **argv)
+{
+    // 40 bytes/task + some margin
+    char buff[40*10 + 100];
+
+    vTaskList( buff );
+    printf("Name          State Priority   Stack  Num\n");
+    printf("------------------------------------------\n");
+    printf("%s",buff);
+
+    printf("‘B’ – Blocked\n‘R’ – Ready\n‘D’ – Deleted (waiting clean up)\n‘S’ – Suspended, or Blocked without a timeout\n");
+    printf("Stack = bytes free at highwater\n");
     return 0;
 }
+#endif
+#endif

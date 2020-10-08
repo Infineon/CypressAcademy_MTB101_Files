@@ -41,12 +41,12 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
+#include "cybt_platform_config.h"
 #include "wiced_bt_stack.h"
 
-#include "app_bt_cfg.h"
 #include "util_functions.h"
 
-/* TODO Ex 01: Include header file for GATT database */
+/* TODO Ex 01: Include header files from BT configurator */
 
 
 /*******************************************************************
@@ -64,8 +64,6 @@ static wiced_bt_gatt_status_t	app_gatt_callback( wiced_bt_gatt_evt_t event, wice
 static wiced_bt_gatt_status_t	app_gatt_get_value( wiced_bt_gatt_read_t *p_data );
 static wiced_bt_gatt_status_t	app_gatt_set_value( wiced_bt_gatt_write_t *p_data );
 
-static void						app_set_advertisement_data( void );
-
 static void 					ble_address_print(wiced_bt_device_address_t bdadr);
 
 /* TODO Ex 02: Button callback function declaration and counter task function declaration */
@@ -74,6 +72,61 @@ static void 					ble_address_print(wiced_bt_device_address_t bdadr);
 /*******************************************************************
  * Global/Static Variables
  ******************************************************************/
+/* BT device stack configuration settings */
+const cybt_platform_config_t bt_platform_cfg_settings =
+{
+	.hci_config =
+	{
+		.hci_transport = CYBT_HCI_UART,
+
+		.hci =
+		{
+			.hci_uart =
+			{
+				.uart_tx_pin = CYBSP_BT_UART_TX,
+				.uart_rx_pin = CYBSP_BT_UART_RX,
+				.uart_rts_pin = CYBSP_BT_UART_RTS,
+				.uart_cts_pin = CYBSP_BT_UART_CTS,
+
+				.baud_rate_for_fw_download = 115200,
+				.baud_rate_for_feature     = 115200,
+
+				.data_bits = 8,
+				.stop_bits = 1,
+				.parity = CYHAL_UART_PARITY_NONE,
+				.flow_control = WICED_TRUE
+			}
+		}
+	},
+
+    .controller_config =
+    {
+        .bt_power_pin      = CYBSP_BT_POWER,
+		.sleep_mode =
+		{
+			#if (bt_0_power_0_ENABLED == 1)     /* BT Power control is enabled in the LPA */
+				#if (CYCFG_BT_LP_ENABLED == 1)  /* Low Power is enabled in the LPA, use the LPA configuration */
+				.sleep_mode_enabled   = CYCFG_BT_LP_ENABLED,
+				.device_wakeup_pin    = CYCFG_BT_DEV_WAKE_GPIO,
+				.host_wakeup_pin      = CYCFG_BT_HOST_WAKE_GPIO,
+				.device_wake_polarity = CYCFG_BT_DEV_WAKE_POLARITY,
+				.host_wake_polarity   = CYCFG_BT_HOST_WAKE_IRQ_EVENT
+
+				#else                           /* Low power is disabled in the LPA */
+				.sleep_mode_enabled   = WICED_FALSE
+				#endif
+			#else                               /* BT Power control is disabled in the LPA, default to BSP's low power configuration */
+				.sleep_mode_enabled   = WICED_TRUE,
+				.device_wakeup_pin    = CYBSP_BT_DEVICE_WAKE,
+				.host_wakeup_pin      = CYBSP_BT_HOST_WAKE,
+				.device_wake_polarity = CYBT_WAKE_ACTIVE_LOW,
+				.host_wake_polarity   = CYBT_WAKE_ACTIVE_LOW
+			#endif
+		}
+    },
+
+	.task_mem_pool_size    = 2048
+};
 
 /* TODO Ex 02: Add global variable for connection ID */
 
@@ -192,7 +245,7 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 
 
 				/* Create the packet and begin advertising */
-				app_set_advertisement_data();
+			    wiced_bt_ble_set_raw_advertisement_data(CY_BT_ADV_PACKET_DATA_SIZE,cy_bt_adv_packet_data);
 				wiced_bt_start_advertisements( BTM_BLE_ADVERT_UNDIRECTED_HIGH, 0, NULL );
 			}
 			else
@@ -303,32 +356,6 @@ static wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wice
 
 
 /*******************************************************************************
-* Function Name: void app_set_advertisement_data( void )
-********************************************************************************/
-static void app_set_advertisement_data( void )
-{
-    wiced_bt_ble_advert_elem_t adv_elem[2] = { 0 };
-    uint8_t adv_flag = BTM_BLE_GENERAL_DISCOVERABLE_FLAG | BTM_BLE_BREDR_NOT_SUPPORTED;
-    uint8_t num_elem = 0;
-
-    /* Advertisement Element for Flags */
-    adv_elem[num_elem].advert_type = BTM_BLE_ADVERT_TYPE_FLAG;
-    adv_elem[num_elem].len = sizeof( uint8_t );
-    adv_elem[num_elem].p_data = &adv_flag;
-    num_elem++;
-
-    /* Advertisement Element for Name */
-    adv_elem[num_elem].advert_type = BTM_BLE_ADVERT_TYPE_NAME_COMPLETE;
-    adv_elem[num_elem].len = app_gap_device_name_len;
-    adv_elem[num_elem].p_data = app_gap_device_name;
-    num_elem++;
-
-    /* Set Raw Advertisement Data */
-    wiced_bt_ble_set_raw_advertisement_data( num_elem, adv_elem );
-}
-
-
-/*******************************************************************************
 * Function Name: app_gatt_get_value(
 * 					wiced_bt_gatt_read_t *p_data )
 ********************************************************************************/
@@ -419,7 +446,7 @@ static wiced_bt_gatt_status_t	app_gatt_set_value( wiced_bt_gatt_write_t *p_data 
 
                 // TODO Ex 01: Add case for action required when this attribute is written
                 // TODO Ex 02: Add case to print message when notifications are enabled/disabled
-                // For example you may need to write the value into NVRAM if it needs to be persistent
+                //             for example you may need to write the value into NVRAM if it needs to be persistent
                 switch ( attr_handle )
                 {
                 	// case EVENT_NAME:

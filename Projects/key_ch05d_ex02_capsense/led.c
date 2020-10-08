@@ -118,6 +118,7 @@ cy_rslt_t initialize_led(void)
         {
             rslt = cyhal_pwm_start(&pwm_led);
         }
+        
     }
 
     if (CY_RSLT_SUCCESS == rslt)

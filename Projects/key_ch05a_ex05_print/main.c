@@ -43,9 +43,6 @@
 #include "cybsp.h"
 #include "cy_retarget_io.h"
 #include <stdio.h>
-#include "cy_rgb_led.h" // Exercise 06
-
-#define DEFINE_TO_STRING(macro) (#macro)	// Exercise 06
 
 int main(void)
 {

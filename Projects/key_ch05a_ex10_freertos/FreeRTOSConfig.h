@@ -97,7 +97,7 @@ extern void vApplicationSleep( uint32_t xExpectedIdleTime );
 #define configSUPPORT_DYNAMIC_ALLOCATION			1
 #define configSUPPORT_STATIC_ALLOCATION				0
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS     16
-#define configUSE_NEWLIB_REENTRANT 					0
+#define configUSE_NEWLIB_REENTRANT 					1
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		0
@@ -163,7 +163,7 @@ standard names. */
 #define HEAP_ALLOCATION_TYPE5                       (5)     /* heap_5.c*/
 #define NO_HEAP_ALLOCATION                          (0)
 
-#define configHEAP_ALLOCATION_SCHEME                (HEAP_ALLOCATION_TYPE4)
+#define configHEAP_ALLOCATION_SCHEME                (HEAP_ALLOCATION_TYPE3)
 
 
 #endif /* FREERTOS_CONFIG_H */

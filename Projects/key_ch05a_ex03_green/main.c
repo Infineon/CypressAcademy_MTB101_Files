@@ -57,7 +57,7 @@ int main(void)
 
     for(;;)
     {
-        cyhal_gpio_toggle(CYBSP_LED_RGB_GREEN); //Exercise 03 & 04
+        cyhal_gpio_toggle(CYBSP_LED_RGB_GREEN);
         Cy_SysLib_Delay(500);
     }
 }

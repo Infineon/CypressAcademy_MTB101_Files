@@ -41,15 +41,17 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
-#include "queue.h"
+#include "cybt_platform_config.h"
 #include "wiced_bt_stack.h"
+#include "queue.h"
 
-#include "app_bt_cfg.h"
 #include "util_functions.h"
 
 #include "cy_em_eeprom.h"
 
-/* Include header file for GATT database */
+/* Header files from BT configurator */
+#include "cycfg_bt_settings.h"
+#include "cycfg_gap.h"
 #include "cycfg_gatt_db.h"
 
 /*******************************************************************
@@ -61,8 +63,11 @@
  */
 #define USE_2SIDE_NUMERIC_VERIFICATION			true
 
-#define TASK_STACK_SIZE (4096u)
-#define	TASK_PRIORITY 	(5u)
+#define	COUNTER_TASK_PRIORITY 	(5u)
+#define COUNTER_TASK_STACK_SIZE (4096u)
+
+#define UART_TASK_PRIORITY 		(5u)
+#define UART_TASK_STACK_SIZE 	(4096u)
 
 #define PWM_BONDING_FREQUENCY	(1)
 #define PWM_BONDED_FREQUENCY	(5)
@@ -74,11 +79,13 @@
 #define MAX_KEY_SIZE (0x10)
 
 /* Logical Start of Emulated EEPROM and location of structure elements. */
-#define LOGICAL_EEPROM_START    	(0u)
-#define EEPROM_REMOTE_BDA_START		(LOGICAL_EEPROM_START)
-#define EEPROM_CCCD_START			(EEPROM_REMOTE_BDA_START + sizeof(bondinfo.remote_bda))
-#define EEPROM_IDENTITY_KEYS_START	(EEPROM_CCCD_START + sizeof(bondinfo.cccd))
-#define EEPROM_LINK_KEYS_START		(EEPROM_IDENTITY_KEYS_START + sizeof(bondinfo.identity_keys))
+/* Sizeof can't be used because of padding in the structure */
+#define LOGICAL_EEPROM_START    (0u)
+#define EEPROM_LOCAL_BDA		((void *)&(bondinfo.local_bda) - (void *)&bondinfo)
+#define EEPROM_REMOTE_BDA		((void *)&(bondinfo.remote_bda) - (void *)&bondinfo)
+#define EEPROM_CCCD				((void *)&(bondinfo.cccd) - (void *)&bondinfo)
+#define EEPROM_IDENTITY_KEYS	((void *)&(bondinfo.identity_keys) - (void *)&bondinfo)
+#define EEPROM_LINK_KEYS		((void *)&(bondinfo.link_keys) - (void *)&bondinfo)
 
 /* EEPROM Configuration details. */
 #define EEPROM_SIZE             (512u)
@@ -108,28 +115,85 @@ static wiced_bt_gatt_status_t	app_gatt_callback( wiced_bt_gatt_evt_t event, wice
 static wiced_bt_gatt_status_t	app_gatt_get_value( wiced_bt_gatt_read_t *p_data );
 static wiced_bt_gatt_status_t	app_gatt_set_value( wiced_bt_gatt_write_t *p_data );
 
-static void						app_set_advertisement_data( void );
-
 static void 					print_ble_address(wiced_bt_device_address_t bdadr);
 
 /* Button callback function declaration and counter task function declaration */
 static void button_cback(void *handler_arg, cyhal_gpio_irq_event_t event);
 static void counter_task(void * arg);
-static void numeric_comparison_task(void * arg);
 
 static void rx_cback(void *handler_arg, cyhal_uart_event_t event); /* Callback for data received from UART */
+static void uart_task(void *pvParameters);
+
 static void print_array(void * to_print, uint16_t len);
 
 /*******************************************************************
  * Global/Static Variables
  ******************************************************************/
+/* BT device stack configuration settings */
+const cybt_platform_config_t bt_platform_cfg_settings =
+{
+	.hci_config =
+	{
+		.hci_transport = CYBT_HCI_UART,
 
-/* Add global variable for connection ID */
+		.hci =
+		{
+			.hci_uart =
+			{
+				.uart_tx_pin = CYBSP_BT_UART_TX,
+				.uart_rx_pin = CYBSP_BT_UART_RX,
+				.uart_rts_pin = CYBSP_BT_UART_RTS,
+				.uart_cts_pin = CYBSP_BT_UART_CTS,
+
+				.baud_rate_for_fw_download = 115200,
+				.baud_rate_for_feature     = 115200,
+
+				.data_bits = 8,
+				.stop_bits = 1,
+				.parity = CYHAL_UART_PARITY_NONE,
+				.flow_control = WICED_TRUE
+			}
+		}
+	},
+
+    .controller_config =
+    {
+        .bt_power_pin      = CYBSP_BT_POWER,
+		.sleep_mode =
+		{
+			#if (bt_0_power_0_ENABLED == 1)     /* BT Power control is enabled in the LPA */
+				#if (CYCFG_BT_LP_ENABLED == 1)  /* Low Power is enabled in the LPA, use the LPA configuration */
+				.sleep_mode_enabled   = CYCFG_BT_LP_ENABLED,
+				.device_wakeup_pin    = CYCFG_BT_DEV_WAKE_GPIO,
+				.host_wakeup_pin      = CYCFG_BT_HOST_WAKE_GPIO,
+				.device_wake_polarity = CYCFG_BT_DEV_WAKE_POLARITY,
+				.host_wake_polarity   = CYCFG_BT_HOST_WAKE_IRQ_EVENT
+
+				#else                           /* Low power is disabled in the LPA */
+				.sleep_mode_enabled   = WICED_FALSE
+				#endif
+			#else                               /* BT Power control is disabled in the LPA, default to BSP's low power configuration */
+				.sleep_mode_enabled   = WICED_TRUE,
+				.device_wakeup_pin    = CYBSP_BT_DEVICE_WAKE,
+				.host_wakeup_pin      = CYBSP_BT_HOST_WAKE,
+				.device_wake_polarity = CYBT_WAKE_ACTIVE_LOW,
+				.host_wake_polarity   = CYBT_WAKE_ACTIVE_LOW
+			#endif
+		}
+    },
+
+	.task_mem_pool_size    = 2048
+};
+
+/* Global variable for connection ID */
 uint16_t connection_id = 0;
 
-/* Add global variables for task handles */
+/* Global variables for task handles */
 TaskHandle_t CounterTaskHandle = NULL;
-TaskHandle_t NumericComparisonTaskHandle = NULL;
+TaskHandle_t UartTaskHandle = NULL;
+
+/* Queue Handle */
+QueueHandle_t xUARTQueue = 0;
 
 bool compare_value = WICED_FALSE;	// Response from numeric comparison
 
@@ -161,7 +225,7 @@ cy_en_em_eeprom_status_t eepromReturnValue;
 const uint8_t zero_key[sizeof(wiced_bt_device_sec_keys_t)] = {0};
 
 /* Structure to store info that goes into EEPROM - it holds the remote BDA, CCCD value, remote keys and local keys */
-__PACKED_STRUCT bondinfo
+struct bondinfo
 {
 	wiced_bt_device_address_t		remote_bda;		/* BD address of remote */
 	uint8_t							cccd[2];
@@ -251,21 +315,25 @@ int main(void)
         printf("Bluetooth Stack Initialization failed!!\n");
     }
 
+    /* Create a queue capable of containing 10 unsigned integer values.
+     this is used for communicating between UART ISR and the UART task */
+    xUARTQueue = xQueueCreate( 10, sizeof(uint8_t) );
+
     /* Start task to handle Counter notifications */
     xTaskCreate (counter_task,
     		"CounterTask",
-			TASK_STACK_SIZE,
+			COUNTER_TASK_STACK_SIZE,
 			NULL,
-			TASK_PRIORITY,
+			COUNTER_TASK_PRIORITY,
 			&CounterTaskHandle);
 
-    /* Start task to handle numeric comparison response */
-    xTaskCreate (numeric_comparison_task,
-    		"NumericResponseTask",
-			TASK_STACK_SIZE,
+    /* Start task to handle UART input */
+    xTaskCreate (uart_task,
+    		"UartTask",
+			UART_TASK_STACK_SIZE,
 			NULL,
-			TASK_PRIORITY,
-			&NumericComparisonTaskHandle);
+			UART_TASK_PRIORITY,
+			&UartTaskHandle);
 
     /* Start the FreeRTOS scheduler */
     vTaskStartScheduler() ;
@@ -332,7 +400,7 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 			    wiced_bt_set_pairable_mode( WICED_TRUE, WICED_FALSE ); /* Enable pairing */
 
 				/* Create the packet and begin advertising */
-				app_set_advertisement_data();
+			    wiced_bt_ble_set_raw_advertisement_data(CY_BT_ADV_PACKET_DATA_SIZE,cy_bt_adv_packet_data);
 				wiced_bt_start_advertisements( BTM_BLE_ADVERT_UNDIRECTED_HIGH, 0, NULL );
 			}
 			else
@@ -347,7 +415,7 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 			printf("\n********************\n" );
 			#if (USE_2SIDE_NUMERIC_VERIFICATION==true) // 2 sided verification
 			printf("Press 'y' if the numeric values match on both devices or press 'n' if they do not.\n\n");
-			/* Save BDA so that the UART receive function can reply based on the user's input */
+			/* Save BDA so that the UART task can reply based on the user's input */
 			memcpy(&(bondinfo.remote_bda), &(p_event_data->user_confirmation_request.bd_addr), sizeof(wiced_bt_device_address_t));
 			#else // 1 sided verification
 			wiced_bt_dev_confirm_req_reply(WICED_BT_SUCCESS, p_event_data->user_confirmation_request.bd_addr );
@@ -374,7 +442,7 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 	        {
 	        	/* Write remote bda to to EEPROM */
 	        	memcpy(&bondinfo.remote_bda, &(p_event_data->pairing_complete.bd_addr), sizeof(wiced_bt_device_address_t));
-	        	eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_REMOTE_BDA_START, &(p_event_data->pairing_complete.bd_addr), sizeof(p_event_data->pairing_complete.bd_addr), &Em_EEPROM_context);
+	        	eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_REMOTE_BDA, &(p_event_data->pairing_complete.bd_addr), sizeof(p_event_data->pairing_complete.bd_addr), &Em_EEPROM_context);
 				if(CY_EM_EEPROM_SUCCESS == eepromReturnValue)
 				{
 		        	printf("Bonding info save to EERPROM for BDA ");
@@ -420,7 +488,7 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 		case BTM_PAIRED_DEVICE_LINK_KEYS_UPDATE_EVT: 			// Save link keys with app
 			printf( "Paired Device Key Update\n");
 			memcpy(&bondinfo.link_keys, &(p_event_data->paired_device_link_keys_update), sizeof( wiced_bt_device_link_keys_t));
-			eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_LINK_KEYS_START, &(p_event_data->paired_device_link_keys_update), sizeof( wiced_bt_device_link_keys_t), &Em_EEPROM_context);
+			eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_LINK_KEYS, &(p_event_data->paired_device_link_keys_update), sizeof( wiced_bt_device_link_keys_t), &Em_EEPROM_context);
 			if(CY_EM_EEPROM_SUCCESS == eepromReturnValue)
 			{
 				printf( "Keys saved to EEPROM for BDA ");
@@ -454,7 +522,7 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 		case BTM_LOCAL_IDENTITY_KEYS_UPDATE_EVT: 				// Save keys to EEPROM
 			printf( "Local Identity Key Update\n" );
 			memcpy(&bondinfo.identity_keys, &(p_event_data->local_identity_keys_update), sizeof(sizeof( wiced_bt_local_identity_keys_t)));
-			eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_IDENTITY_KEYS_START, &(p_event_data->local_identity_keys_update), sizeof( wiced_bt_local_identity_keys_t), &Em_EEPROM_context);
+			eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_IDENTITY_KEYS, &(p_event_data->local_identity_keys_update), sizeof( wiced_bt_local_identity_keys_t), &Em_EEPROM_context);
 			if(CY_EM_EEPROM_SUCCESS == eepromReturnValue)
 			{
 				printf( "Local identity Keys saved to EEPROM, result: %d:", eepromReturnValue);
@@ -499,12 +567,10 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 					if(connection_id)
 					{
 						cyhal_pwm_set_duty_cycle(&pwm_obj, PWM_ON_DUTY, PWM_BONDING_FREQUENCY);
-				        cyhal_timer_reset(&pwm_obj);
 					}
 					else
 					{
 						cyhal_pwm_set_duty_cycle(&pwm_obj, PWM_OFF_DUTY, PWM_BONDING_FREQUENCY);
-				        cyhal_timer_reset(&pwm_obj);
 					}
 					break;
 
@@ -512,12 +578,10 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 					if( bonded )
 					{
 						cyhal_pwm_set_duty_cycle( &pwm_obj, PWM_TOGGLE_DUTY, PWM_BONDED_FREQUENCY );
-				        cyhal_timer_reset(&pwm_obj);
 					}
 					else
 					{
 						cyhal_pwm_set_duty_cycle( &pwm_obj, PWM_TOGGLE_DUTY, PWM_BONDING_FREQUENCY);
-						cyhal_timer_reset(&pwm_obj);
 						break;
 					}
 			}
@@ -597,32 +661,6 @@ static wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wice
     }
 
     return result;
-}
-
-
-/*******************************************************************************
-* Function Name: void app_set_advertisement_data( void )
-********************************************************************************/
-static void app_set_advertisement_data( void )
-{
-    wiced_bt_ble_advert_elem_t adv_elem[2] = { 0 };
-    uint8_t adv_flag = BTM_BLE_GENERAL_DISCOVERABLE_FLAG | BTM_BLE_BREDR_NOT_SUPPORTED;
-    uint8_t num_elem = 0;
-
-    /* Advertisement Element for Flags */
-    adv_elem[num_elem].advert_type = BTM_BLE_ADVERT_TYPE_FLAG;
-    adv_elem[num_elem].len = sizeof( uint8_t );
-    adv_elem[num_elem].p_data = &adv_flag;
-    num_elem++;
-
-    /* Advertisement Element for Name */
-    adv_elem[num_elem].advert_type = BTM_BLE_ADVERT_TYPE_NAME_COMPLETE;
-    adv_elem[num_elem].len = app_gap_device_name_len;
-    adv_elem[num_elem].p_data = app_gap_device_name;
-    num_elem++;
-
-    /* Set Raw Advertisement Data */
-    wiced_bt_ble_set_raw_advertisement_data( num_elem, adv_elem );
 }
 
 
@@ -729,7 +767,7 @@ static wiced_bt_gatt_status_t	app_gatt_set_value( wiced_bt_gatt_write_t *p_data 
                     		/* Save value to EEPROM */
                    		bondinfo.cccd[0] = p_val[0];
 						bondinfo.cccd[1] = p_val[1];
-						eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_CCCD_START, &(bondinfo.cccd), sizeof(bondinfo.cccd), &Em_EEPROM_context);
+						eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_CCCD, &(bondinfo.cccd), sizeof(bondinfo.cccd), &Em_EEPROM_context);
 						if(CY_EM_EEPROM_SUCCESS != eepromReturnValue)
 						{
 							printf("EEROM Write Error: %d\n", eepromReturnValue);
@@ -806,43 +844,6 @@ static void counter_task(void * arg)
 }
 
 
-/**************************************************************************************************
-* Function Name: numeric_comparison_task(void * arg)
-***************************************************************************************************
-* Summary:
-*   This task waits for the user to input a response during numeric comparison. It then sends the
-*   response to the stack depending on whether the user entered 'y' or 'n'.
-*
-* Parameters:
-*   none
-*
-* Return:
-*   void
-*
-**************************************************************************************************/
-static void numeric_comparison_task(void * arg)
-{
-	for(;;)
-	{
-		// Wait for a message from the UART RX callback
-		if(ulTaskNotifyTake( pdFALSE, portMAX_DELAY )) // return value of 1 means is was not a timeout
-		{
-			// Sent the appropriate response based on the queue value
-			if (compare_value == true)
-			{
-				printf("Numeric Values Match\n");
-				wiced_bt_dev_confirm_req_reply(WICED_BT_SUCCESS, bondinfo.remote_bda );
-			}
-			else if (compare_value == false)
-			{
-				printf("Numeric Values Don't Match\n");
-				wiced_bt_dev_confirm_req_reply(WICED_BT_ERROR, bondinfo.remote_bda );
-			}
-		}
-	}
-}
-
-
 /* Button callback function */
 /**************************************************************************************************
 * Function Name: button_cback(void *handler_arg, cyhal_gpio_irq_event_t event)
@@ -866,70 +867,112 @@ static void button_cback(void *handler_arg, cyhal_gpio_irq_event_t event)
 
 
 /*******************************************************************************
-* Function Name: void rx_cback( void *data )
-********************************************************************************/
+* Function Name: rx_cback()
+********************************************************************************
+*
+* Summary:
+*   This function gets a character from the UART and sends it to the UART
+*   task for processing
+*
+* Parameters:
+*   void *handler_arg:                 Not used
+*   cyhal_uart_event_t event:          Not used
+*
+* Return:
+*   None
+*
+*******************************************************************************/
 void rx_cback(void *handler_arg, cyhal_uart_event_t event)
 {
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-	(void) handler_arg;
-
-	uint8_t readbyte;
-	bool notify_value;
+    (void) handler_arg;
+    uint8_t readbyte;
+	cy_rslt_t status;
 
     /* Read one byte from the buffer with a 100ms timeout */
-    cyhal_uart_getc(&cy_retarget_io_uart_obj , &readbyte, 100);
+    status = cyhal_uart_getc(&cy_retarget_io_uart_obj , &readbyte, 100);
 
-    /* Remove bonding info if the user sends 'e' */
-	if(readbyte == 'e')
+    /* If a character was received,send it to the UART task */
+	if(CY_RSLT_SUCCESS == status)
+	{
+    	xQueueSendFromISR( xUARTQueue, &readbyte, NULL);
+	}
+}
+
+/*******************************************************************************
+* Function Name: uart_task()
+********************************************************************************
+*
+* Summary:
+*   This function runs the UART task which processes the received commands via
+*   Terminal.
+*
+* Parameters:
+*   void *pvParameters                 Not used
+*
+* Return:
+*   None
+*
+*******************************************************************************/
+static void uart_task(void *pvParameters)
+{
+    uint8_t readbyte;
+    for(;;)
     {
-		/* Put into bonding mode  */
-		bonded = WICED_FALSE;
-		cyhal_pwm_set_duty_cycle(&pwm_obj, PWM_TOGGLE_DUTY, PWM_BONDING_FREQUENCY);
-        cyhal_timer_reset(&pwm_obj);
+		/* Wait for a character to be sent from the UART ISR */
+        if(pdPASS== xQueueReceive( xUARTQueue, &(readbyte), portMAX_DELAY))
+        {
+            switch (readbyte)
+			{
+				case 'e': /* Remove bonding info if the user sends 'e' */
+					printf( "Removing bonded device info\n");
 
-		/* Remove from the bonded device list */
-		wiced_bt_dev_delete_bonded_device(bondinfo.remote_bda);
-		printf( "Removed host from bonded device list: ");
-		print_ble_address(bondinfo.remote_bda);
-		printf( "\n");
+					/* Put into bonding mode  */
+					bonded = WICED_FALSE;
+					cyhal_pwm_set_duty_cycle(&pwm_obj, PWM_TOGGLE_DUTY, PWM_BONDING_FREQUENCY);
 
-		/* Remove device from address resolution database */
-		wiced_bt_dev_remove_device_from_address_resolution_db (&(bondinfo.link_keys));
-		printf( "Removed device from address resolution database\n");
+					/* Remove from the bonded device list */
+					wiced_bt_dev_delete_bonded_device(bondinfo.remote_bda);
+					printf( "Removed host from bonded device list: ");
+					print_ble_address(bondinfo.remote_bda);
+					printf( "\n");
 
-		/* Remove bonding information from EERPOM */
-		memset( &bondinfo, 0, sizeof(bondinfo) );
-		eepromReturnValue = Cy_Em_EEPROM_Write(LOGICAL_EEPROM_START, &bondinfo, sizeof(bondinfo), &Em_EEPROM_context);
-		if(CY_EM_EEPROM_SUCCESS == eepromReturnValue)
-		{
-			printf( "Erased EEPROM\n");
+					/* Remove device from address resolution database */
+					wiced_bt_dev_remove_device_from_address_resolution_db (&(bondinfo.link_keys));
+					printf( "Removed device from address resolution database\n");
+
+					/* Remove bonding information from EERPOM */
+					memset( &bondinfo, 0, sizeof(bondinfo) );
+					eepromReturnValue = Cy_Em_EEPROM_Write(LOGICAL_EEPROM_START, &bondinfo, sizeof(bondinfo), &Em_EEPROM_context);
+					if(CY_EM_EEPROM_SUCCESS == eepromReturnValue)
+					{
+						printf( "Erased EEPROM\n");
+					}
+					else
+					{
+						printf("EEROM Write Error: %d\n", eepromReturnValue);
+					}
+					break;
+
+				#if (USE_2SIDE_NUMERIC_VERIFICATION==true) /* 2 sided numeric comparison verification */
+				case 'y' :
+					/* Send the numeric comparison response from the user */
+                   wiced_bt_dev_confirm_req_reply(WICED_BT_SUCCESS,bondinfo.remote_bda);
+                    printf("Numeric Values Match\n");
+					break;
+
+				case 'n' :
+					/* Send the numeric comparison response from the user */
+					wiced_bt_dev_confirm_req_reply(WICED_BT_ERROR, bondinfo.remote_bda);
+                    printf("Numeric Values Don't Match\n");
+					break;
+				#endif
+
+				default:
+					printf( "Invalid input\n");
+					break;
+			}
 		}
-		else
-		{
-			printf("EEROM Write Error: %d\n", eepromReturnValue);
-		}
-    }
-	#if (USE_2SIDE_NUMERIC_VERIFICATION==true) // 2 sided verification
-	else if (readbyte == 'y')
-	{
-		// Set the value for the response and unlock the thread that will send the response
-		compare_value = true;
-		vTaskNotifyGiveFromISR( NumericComparisonTaskHandle, &xHigherPriorityTaskWoken );
 	}
-	else if (readbyte == 'n')
-	{
-		// Set the value for the response and unlock the thread that will send the response
-		compare_value = false;
-		vTaskNotifyGiveFromISR( NumericComparisonTaskHandle, &xHigherPriorityTaskWoken );
-	}
-	#endif
-
-	/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-	should be performed to ensure the interrupt returns directly to the highest
-	priority task.  The macro used for this purpose is dependent on the port in
-	use and may be called portEND_SWITCHING_ISR(). */
-	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
 

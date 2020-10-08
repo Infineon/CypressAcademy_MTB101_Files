@@ -4,10 +4,10 @@
 * Description:
 * System configuration
 * This file was automatically generated and should not be modified.
-* Tools Package 2.1.0.1266
-* psoc6pdl 1.6.0.4266
-* personalities_2.0 2.0.0.0
-* udd 1.2.0.370
+* Tools Package 2.2.0.2703
+* latest-v2.X 2.0.0.6211
+* personalities 3.0.0.0
+* udd 3.0.0.562
 *
 ********************************************************************************
 * Copyright 2020 Cypress Semiconductor Corporation
@@ -48,7 +48,12 @@ extern "C" {
 #define CY_CFG_SYSCLK_CLKHF0 0UL
 #define CY_CFG_SYSCLK_CLKHF0_CLKPATH_NUM 3UL
 #define srss_0_clock_0_imo_0_ENABLED 1U
+#define srss_0_clock_0_pathmux_0_ENABLED 1U
+#define srss_0_clock_0_pathmux_1_ENABLED 1U
+#define srss_0_clock_0_pathmux_2_ENABLED 1U
 #define srss_0_clock_0_pathmux_3_ENABLED 1U
+#define srss_0_clock_0_pathmux_4_ENABLED 1U
+#define srss_0_clock_0_pathmux_5_ENABLED 1U
 #define srss_0_clock_0_periclk_0_ENABLED 1U
 #define srss_0_clock_0_slowclk_0_ENABLED 1U
 #define srss_0_power_0_ENABLED 1U
@@ -69,7 +74,22 @@ extern "C" {
 #define CY_CFG_PWR_VDDIO1_MV 3300
 
 #if defined (CY_USING_HAL)
+	extern const cyhal_resource_inst_t srss_0_clock_0_pathmux_0_obj;
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	extern const cyhal_resource_inst_t srss_0_clock_0_pathmux_1_obj;
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	extern const cyhal_resource_inst_t srss_0_clock_0_pathmux_2_obj;
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	extern const cyhal_resource_inst_t srss_0_clock_0_pathmux_3_obj;
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	extern const cyhal_resource_inst_t srss_0_clock_0_pathmux_4_obj;
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	extern const cyhal_resource_inst_t srss_0_clock_0_pathmux_5_obj;
 #endif //defined (CY_USING_HAL)
 
 void init_cycfg_system(void);

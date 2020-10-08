@@ -60,13 +60,12 @@
 /*******************************************************************************
 * Function Prototypes
 *******************************************************************************/
-static cy_status initialize_capsense(void);
+static uint32_t initialize_capsense(void);
 static void process_touch(void);
 static void initialize_capsense_tuner(void);
 static void capsense_isr(void);
 static void capsense_callback();
-static void handle_ezi2c_tuner_event(void *callback_arg, cyhal_ezi2c_status_t event);
-void handle_error(void);
+volatile void handle_error(void);
 
 /*******************************************************************************
 * Global Variables
@@ -75,7 +74,7 @@ cy_stc_scb_ezi2c_context_t ezi2c_context;
 cyhal_ezi2c_t sEzI2C;
 cyhal_ezi2c_slave_cfg_t sEzI2C_sub_cfg;
 cyhal_ezi2c_cfg_t sEzI2C_cfg;
-bool capsense_scan_complete = false;
+volatile bool capsense_scan_complete = false;
 
 /*******************************************************************************
 * Function Name: handle_error
@@ -114,7 +113,6 @@ void handle_error(void)
 *******************************************************************************/
 int main(void)
 {
-    cy_status status;
     cy_rslt_t result;
 
     /* Initialize the device and board peripherals */
@@ -131,9 +129,9 @@ int main(void)
 
     initialize_led();
     initialize_capsense_tuner();
-    status = initialize_capsense();
+    result = initialize_capsense();
 
-    if (CYRET_SUCCESS != status)
+    if (CYRET_SUCCESS != result)
     {
         /* Halt the CPU if CapSense initialization failed */
         CY_ASSERT(0);
@@ -157,16 +155,16 @@ int main(void)
              */
             Cy_CapSense_RunTuner(&cy_capsense_context);
 
-            capsense_scan_complete = false;
-        }
-
-        if (CY_CAPSENSE_NOT_BUSY == Cy_CapSense_IsBusy(&cy_capsense_context))
-        {
             /* Initiate next scan */
             Cy_CapSense_ScanAllWidgets(&cy_capsense_context);
+
+            capsense_scan_complete = false;
+
+            cyhal_syspm_sleep(); /* Sleep until CapSense completes a scan */
         }
-        cyhal_syspm_sleep();
+
     }
+    
 }
 
 /*******************************************************************************
@@ -254,9 +252,9 @@ static void process_touch(void)
 *  interrupt.
 *
 *******************************************************************************/
-static cy_status initialize_capsense(void)
+static uint32_t initialize_capsense(void)
 {
-    cy_status status = CYRET_SUCCESS;
+    uint32_t status = CYRET_SUCCESS;
 
     /* CapSense interrupt configuration */
     const cy_stc_sysint_t CapSense_interrupt_config =
@@ -322,45 +320,6 @@ void capsense_callback(cy_stc_active_scan_sns_t * ptrActiveScan)
     capsense_scan_complete = true;
 }
 
-/*******************************************************************************
-* Function Name: handle_ezi2c_tuner_event
-********************************************************************************
-* Summary:
-*  Wrapper function for handling interrupts from EZI2C block.
-*
-* Parameters:
-*  callback_arg : extra argument that can be passed to callback
-*  event        : EzI2C event
-*
-* Return:
-*  void
-*
-*******************************************************************************/
-static void handle_ezi2c_tuner_event(void *callback_arg, cyhal_ezi2c_status_t event)
-{
-    cyhal_ezi2c_status_t status;
-    cy_stc_scb_ezi2c_context_t *context = &ezi2c_context;
-
-    /* Get the slave interrupt sources */
-    status = cyhal_ezi2c_get_activity_status(&sEzI2C);
-
-    /* Handle the error conditions */
-    if (0UL != (CYHAL_EZI2C_STATUS_ERR & status))
-    {
-        handle_error();
-    }
-
-    /* Handle the receive direction (master writes data) */
-    if (0 != (CYHAL_EZI2C_STATUS_READ1 & status))
-    {
-        cyhal_i2c_slave_config_write_buffer((cyhal_i2c_t *)&sEzI2C, context->curBuf, context->bufSize);
-    }
-    /* Handle the transmit direction (master reads data) */
-    if (0 != (CYHAL_EZI2C_STATUS_WRITE1 & status))
-    {
-        cyhal_i2c_slave_config_read_buffer((cyhal_i2c_t *)&sEzI2C, context->curBuf, context->bufSize);
-    }
-}
 
 /*******************************************************************************
 * Function Name: initialize_capsense_tuner
@@ -390,10 +349,7 @@ static void initialize_capsense_tuner(void)
     {
         handle_error();
     }
-    cyhal_ezi2c_register_callback(&sEzI2C, handle_ezi2c_tuner_event, NULL);
-    cyhal_ezi2c_enable_event(&sEzI2C,
-                             (CYHAL_EZI2C_STATUS_ERR | CYHAL_EZI2C_STATUS_WRITE1 | CYHAL_EZI2C_STATUS_READ1),
-                             EZI2C_INTR_PRIORITY, true);
+
 }
 
 /* [] END OF FILE */

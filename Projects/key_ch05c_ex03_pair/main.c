@@ -41,13 +41,16 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
+#include "cybt_platform_config.h"
 #include "wiced_bt_stack.h"
 
-#include "app_bt_cfg.h"
 #include "util_functions.h"
 
-/* TODO Ex 01: Include header file for GATT database */
+/* Include header files from BT configurator */
+#include "cycfg_bt_settings.h"
+#include "cycfg_gap.h"
 #include "cycfg_gatt_db.h"
+
 
 /*******************************************************************
  * Macros to assist development of the exercises
@@ -64,24 +67,78 @@ static wiced_bt_gatt_status_t	app_gatt_callback( wiced_bt_gatt_evt_t event, wice
 static wiced_bt_gatt_status_t	app_gatt_get_value( wiced_bt_gatt_read_t *p_data );
 static wiced_bt_gatt_status_t	app_gatt_set_value( wiced_bt_gatt_write_t *p_data );
 
-static void						app_set_advertisement_data( void );
-
 static void 					ble_address_print(wiced_bt_device_address_t bdadr);
 
-/* TODO Ex 02: Button callback function declaration and counter task function declaration */
-static void button_cback(void *handler_arg, cyhal_gpio_irq_event_t event);
+/* Button callback function declaration and counter task function declaration */
+void button_cback(void *handler_arg, cyhal_gpio_irq_event_t event);
 static void counter_task(void * arg);
 
 
 /*******************************************************************
  * Global/Static Variables
  ******************************************************************/
+/* BT device stack configuration settings */
+const cybt_platform_config_t bt_platform_cfg_settings =
+{
+	.hci_config =
+	{
+		.hci_transport = CYBT_HCI_UART,
 
-/* TODO Ex 02: Add global variable for connection ID */
+		.hci =
+		{
+			.hci_uart =
+			{
+				.uart_tx_pin = CYBSP_BT_UART_TX,
+				.uart_rx_pin = CYBSP_BT_UART_RX,
+				.uart_rts_pin = CYBSP_BT_UART_RTS,
+				.uart_cts_pin = CYBSP_BT_UART_CTS,
+
+				.baud_rate_for_fw_download = 115200,
+				.baud_rate_for_feature     = 115200,
+
+				.data_bits = 8,
+				.stop_bits = 1,
+				.parity = CYHAL_UART_PARITY_NONE,
+				.flow_control = WICED_TRUE
+			}
+		}
+	},
+
+    .controller_config =
+    {
+        .bt_power_pin      = CYBSP_BT_POWER,
+		.sleep_mode =
+		{
+			#if (bt_0_power_0_ENABLED == 1)     /* BT Power control is enabled in the LPA */
+				#if (CYCFG_BT_LP_ENABLED == 1)  /* Low Power is enabled in the LPA, use the LPA configuration */
+				.sleep_mode_enabled   = CYCFG_BT_LP_ENABLED,
+				.device_wakeup_pin    = CYCFG_BT_DEV_WAKE_GPIO,
+				.host_wakeup_pin      = CYCFG_BT_HOST_WAKE_GPIO,
+				.device_wake_polarity = CYCFG_BT_DEV_WAKE_POLARITY,
+				.host_wake_polarity   = CYCFG_BT_HOST_WAKE_IRQ_EVENT
+
+				#else                           /* Low power is disabled in the LPA */
+				.sleep_mode_enabled   = WICED_FALSE
+				#endif
+			#else                               /* BT Power control is disabled in the LPA, default to BSP's low power configuration */
+				.sleep_mode_enabled   = WICED_TRUE,
+				.device_wakeup_pin    = CYBSP_BT_DEVICE_WAKE,
+				.host_wakeup_pin      = CYBSP_BT_HOST_WAKE,
+				.device_wake_polarity = CYBT_WAKE_ACTIVE_LOW,
+				.host_wake_polarity   = CYBT_WAKE_ACTIVE_LOW
+			#endif
+		}
+    },
+
+	.task_mem_pool_size    = 2048
+};
+
+/* Add global variable for connection ID */
 uint16_t connection_id = 0;
 
-/* TODO Ex 02: Add global variable for counter task handle */
+/* Add global variable for counter task handle */
 TaskHandle_t CounterTaskHandle = NULL;
+
 
 /*******************************************************************
  * Function Implementations
@@ -109,10 +166,12 @@ int main(void)
     /* Initialize LED Pin */
     cyhal_gpio_init(CYBSP_USER_LED,CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
 
-    /* TODO Ex 02: Configure CYBSP_USER_BTN for a falling edge interrupt */
-    cyhal_gpio_init(CYBSP_USER_BTN, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
+    /* Configure CYBSP_USER_BTN for a falling edge interrupt */
+    /* Configure CYBSP_USER_BTN for a falling edge interrupt */
+    cyhal_gpio_init(CYBSP_USER_BTN,CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
     cyhal_gpio_register_callback(CYBSP_USER_BTN, button_cback, NULL);
     cyhal_gpio_enable_event(CYBSP_USER_BTN, CYHAL_GPIO_IRQ_FALL, 3, true);
+
 
     printf("**********Application Start*****************\n");
 
@@ -132,13 +191,14 @@ int main(void)
         printf("Bluetooth Stack Initialization failed!!\n");
     }
 
-    /* TODO Ex 02: Start task to handle Counter notifications */
+    /* Start task to handle Counter notifications */
     xTaskCreate (counter_task,
-    		"CounterTask",
-			TASK_STACK_SIZE,
-			NULL,
-			TASK_PRIORITY,
-			&CounterTaskHandle);
+    "CounterTask",
+    TASK_STACK_SIZE,
+    NULL,
+    TASK_PRIORITY,
+    &CounterTaskHandle);
+
 
     /* Start the FreeRTOS scheduler */
     vTaskStartScheduler() ;
@@ -184,24 +244,21 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 				ble_address_print(bda);
 				printf( "\n");
 
-				/* TODO Ex 01: Register GATT callback */
+				/* Register GATT callback */
 				wiced_bt_gatt_register( app_gatt_callback );
-
 			    printf("GATT event Handler registration status: %s \n",gatt_status_name(status));
 
-
-			    /* TODO Ex 01: Initialize the GATT database */
+			    /* Initialize the GATT database */
 			    wiced_bt_gatt_db_init( gatt_database, gatt_database_len, NULL );
-
 			    printf("GATT database initiliazation status: %s \n",gatt_status_name(status));
 
 
-				/* TODO Ex 01: Enable/disable pairing */
-			    wiced_bt_set_pairable_mode( WICED_TRUE, WICED_FALSE ); /* Enable pairing */
+				/* Enable/disable pairing */
+			    wiced_bt_set_pairable_mode( WICED_TRUE, WICED_FALSE );
 
 
 				/* Create the packet and begin advertising */
-				app_set_advertisement_data();
+			    wiced_bt_ble_set_raw_advertisement_data(CY_BT_ADV_PACKET_DATA_SIZE,cy_bt_adv_packet_data);
 				wiced_bt_start_advertisements( BTM_BLE_ADVERT_UNDIRECTED_HIGH, 0, NULL );
 			}
 			else
@@ -212,8 +269,12 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 
 		case BTM_PAIRING_IO_CAPABILITIES_BLE_REQUEST_EVT: 		// IO capabilities request
 			p_event_data->pairing_io_capabilities_ble_request.auth_req = BTM_LE_AUTH_REQ_SC_MITM_BOND;
-			p_event_data->pairing_io_capabilities_ble_request.init_keys = BTM_LE_KEY_PENC | BTM_LE_KEY_PID;
+			p_event_data->pairing_io_capabilities_ble_request.init_keys = BTM_LE_KEY_PENC|BTM_LE_KEY_PID;
 			p_event_data->pairing_io_capabilities_ble_request.local_io_cap = BTM_IO_CAPABILITIES_NONE;
+			p_event_data->pairing_io_capabilities_ble_request.max_key_size = 0x10;
+			p_event_data->pairing_io_capabilities_ble_request.resp_keys = BTM_LE_KEY_PENC|BTM_LE_KEY_PID;
+	        p_event_data->pairing_io_capabilities_ble_request.oob_data = BTM_OOB_NONE;
+
 			break;
 
 		case BTM_PAIRING_COMPLETE_EVT: 						// Pairing Complete event
@@ -223,7 +284,7 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 			break;
 
 		case BTM_SECURITY_REQUEST_EVT: 						// Security access
-			wiced_bt_ble_security_grant( p_event_data->security_request.bd_addr, WICED_BT_SUCCESS);
+			wiced_bt_ble_security_grant( p_event_data->security_request.bd_addr, WICED_BT_SUCCESS );
 			break;
 
 		case BTM_PAIRED_DEVICE_LINK_KEYS_UPDATE_EVT: 			// Save link keys with app
@@ -274,8 +335,9 @@ static wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wice
             	ble_address_print(p_conn->bd_addr);
             	printf("Connection ID %d\n", p_conn->conn_id );
 
-				/* TODO Ex 02: Handle the connection */
+				/* Handle the connection */
             	connection_id = p_conn->conn_id;
+
 			}
 			else
 			{
@@ -284,7 +346,7 @@ static wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wice
 	            ble_address_print(p_conn->bd_addr);
 	            printf("Connection ID '%d', Reason '%s'\n", p_conn->conn_id, gatt_disconn_reason_name(p_conn->reason) );
 
-				/* TODO Ex 02: Handle the disconnection */
+				/* Handle the disconnection */
 	            connection_id = 0;
 
 				/* Restart the advertisements */
@@ -311,32 +373,6 @@ static wiced_bt_gatt_status_t app_gatt_callback( wiced_bt_gatt_evt_t event, wice
     }
 
     return result;
-}
-
-
-/*******************************************************************************
-* Function Name: void app_set_advertisement_data( void )
-********************************************************************************/
-static void app_set_advertisement_data( void )
-{
-    wiced_bt_ble_advert_elem_t adv_elem[2] = { 0 };
-    uint8_t adv_flag = BTM_BLE_GENERAL_DISCOVERABLE_FLAG | BTM_BLE_BREDR_NOT_SUPPORTED;
-    uint8_t num_elem = 0;
-
-    /* Advertisement Element for Flags */
-    adv_elem[num_elem].advert_type = BTM_BLE_ADVERT_TYPE_FLAG;
-    adv_elem[num_elem].len = sizeof( uint8_t );
-    adv_elem[num_elem].p_data = &adv_flag;
-    num_elem++;
-
-    /* Advertisement Element for Name */
-    adv_elem[num_elem].advert_type = BTM_BLE_ADVERT_TYPE_NAME_COMPLETE;
-    adv_elem[num_elem].len = app_gap_device_name_len;
-    adv_elem[num_elem].p_data = app_gap_device_name;
-    num_elem++;
-
-    /* Set Raw Advertisement Data */
-    wiced_bt_ble_set_raw_advertisement_data( num_elem, adv_elem );
 }
 
 
@@ -386,12 +422,12 @@ static wiced_bt_gatt_status_t	app_gatt_get_value( wiced_bt_gatt_read_t *p_data )
 			memcpy(p_val, app_gatt_db_ext_attr_tbl[i].p_data + offset, len_to_copy);
 			res = WICED_BT_GATT_SUCCESS;
 
-			// TODO Ex 01: Add case for any action required when this attribute is read
 			switch ( attr_handle )
 			{
 				case HDLC_MODUS101_LED_VALUE:
-					printf("LED is %s\n", app_modus101_led[0] ? "ON":"OFF");
-					break;
+			    	printf("LED is %s\n", app_modus101_led[0] ? "ON":"OFF");
+			    	break;
+
 			}
 			break; /* break out of for loop once matching handle is found */
        }
@@ -430,18 +466,17 @@ static wiced_bt_gatt_status_t	app_gatt_set_value( wiced_bt_gatt_write_t *p_data 
                 memcpy(app_gatt_db_ext_attr_tbl[i].p_data, p_val, len);
     			res = WICED_BT_GATT_SUCCESS;
 
-                // TODO Ex 01: Add case for action required when this attribute is written
-                // TODO Ex 02: Add case to print message when notifications are enabled/disabled
-                // For example you may need to write the value into NVRAM if it needs to be persistent
                 switch ( attr_handle )
                 {
                 	case HDLC_MODUS101_LED_VALUE:
-						cyhal_gpio_write( CYBSP_USER_LED, app_modus101_led[0] == 0 );
-						printf("Turn the LED %s\n", app_modus101_led[0] ? "ON":"OFF");
-						break;
+                        cyhal_gpio_write( CYBSP_USER_LED, app_modus101_led[0] == 0 );
+                        printf("Turn the LED %s\n", app_modus101_led[0] ? "ON":"OFF");
+                        break;
                 	case HDLD_MODUS101_COUNTER_CLIENT_CHAR_CONFIG:
-                		printf("Setting notify (0x%02x, 0x%02x)\n", p_val[0], p_val[1]);
-                		break;
+                        printf("Setting notify (0x%02x, 0x%02x)\n", p_val[0], p_val[1]);
+                        break;
+
+
                 }
             }
             else /* Length of data will not fit */
@@ -478,78 +513,65 @@ static void ble_address_print(wiced_bt_device_address_t bdadr)
 }
 
 
-/* TODO Ex 02: Counter task to send a notification */
-/**************************************************************************************************
-* Function Name: counter_task(void * arg)
-***************************************************************************************************
-* Summary:
-*   This is the utility function that sends a notification if there is a connection and the client
-*   has asked for notifications to be sent. It is unlocked by the button ISR.
-*
-* Parameters:
-*   none
-*
-* Return:
-*   void
-*
-**************************************************************************************************/
+/* Counter task to send a notification */
 static void counter_task(void * arg)
 {
-	/* Notification values received from ISR */
-	uint32_t ulNotificationValue;
+    /* Notification values received from ISR */
+    uint32_t ulNotificationValue;
+    while(true)
+    {
+       /* Wait for the button ISR */
+       ulNotificationValue = ulTaskNotifyTake( pdFALSE, portMAX_DELAY );
 
-	while(true)
-	{
-		/* Wait for the button ISR */
-		ulNotificationValue = ulTaskNotifyTake( pdFALSE, portMAX_DELAY );
+       /* If button was pressed increment value and check to see if a
+        * BLE notification should be sent. If this value is not 1, then
+        * it was not a button press (most likely a timeout) that caused
+        * the event so we don't want to send a BLE notification. */
+        if (ulNotificationValue == 1)
+        {
+            if( connection_id ) /* Check if we have an active connection */
+            {
+                /* Check to see if the client has asked for notifications */
+                 if( app_modus101_counter_client_char_config[0] &
+                 GATT_CLIENT_CONFIG_NOTIFICATION )
+                 {
+                     printf( "Notifying counter change (%d)\n",
+                         app_modus101_counter[0] );
+                     wiced_bt_gatt_send_notification(
+                         connection_id,
+                         HDLC_MODUS101_COUNTER_VALUE,
+                         app_modus101_counter_len,
+                         app_modus101_counter );
+                 }
+             }
+         }
 
-		/* If button was pressed increment value and check to see if a
-		 * BLE notification should be sent. If this value is not 1, then
-		 * it was not a button press (most likely a timeout) that caused
-		 * the event so we don't want to send a BLE notification. */
-		if (ulNotificationValue == 1)
-		{
-
-			if( connection_id ) /* Check if we have an active connection */
-			{
-				/* Check to see if the client has asked for notifications */
-				if( app_modus101_counter_client_char_config[0] & GATT_CLIENT_CONFIG_NOTIFICATION )
-				{
-					printf( "Notifying counter change (%d)\n", app_modus101_counter[0] );
-					wiced_bt_gatt_send_notification(
-							connection_id,
-							HDLC_MODUS101_COUNTER_VALUE,
-							app_modus101_counter_len,
-							app_modus101_counter );
-				}
-			}
-		}
-		else
-		{
-			/* The call to ulTaskNotifyTake() timed out. */
-		}
-	}
+         else
+         {
+                /* The call to ulTaskNotifyTake() timed out. */
+        }
+    }
 }
 
-/* TODO Ex 02: Button callback function */
-/**************************************************************************************************
-* Function Name: button_cback(void *handler_arg, cyhal_gpio_irq_event_t event)
-**************************************************************************************************/
-static void button_cback(void *handler_arg, cyhal_gpio_irq_event_t event)
+
+/* Button callback function */
+void button_cback(void *handler_arg, cyhal_gpio_irq_event_t event)
 {
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-	/* Increment button counter */
-	app_modus101_counter[0]++;
+    /* Increment button counter */
+    app_modus101_counter[0]++;
 
-	/* Notify the counter task that the button was pressed */
-	vTaskNotifyGiveFromISR( CounterTaskHandle, &xHigherPriorityTaskWoken );
+    /* Notify the counter task that the button was pressed */
+    vTaskNotifyGiveFromISR( CounterTaskHandle, &xHigherPriorityTaskWoken );
 
-	/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-	should be performed to ensure the interrupt returns directly to the highest
-	priority task.  The macro used for this purpose is dependent on the port in
-	use and may be called portEND_SWITCHING_ISR(). */
-	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+    /* If xHigherPriorityTaskWoken is now set to pdTRUE then a context
+       Switch should be performed to ensure the interrupt returns directly
+       to the highest priority task.  The macro used for this purpose is
+       dependent on the port in use and may be called
+       portEND_SWITCHING_ISR(). */
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
+
 
 /* [] END OF FILE */

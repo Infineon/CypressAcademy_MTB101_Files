@@ -33,12 +33,17 @@
 #ifndef USRCMD_H
 #define USRCMD_H
 
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+void usrcmd_task();
 int usrcmd_execute(const char *text);
+
+extern uint ledrate;
 
 #ifdef __cplusplus
 } // extern "C"

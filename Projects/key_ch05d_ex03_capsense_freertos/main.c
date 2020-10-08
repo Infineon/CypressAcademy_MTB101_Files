@@ -48,6 +48,7 @@
 /******************************************************************************
 * Include header files
 ******************************************************************************/
+
 #include "cybsp.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -66,7 +67,7 @@
 #define TASK_LED_PRIORITY           (configMAX_PRIORITIES - 2)
 
 /* Stack sizes of user tasks in this project */
-#define TASK_CAPSENSE_STACK_SIZE    (configMINIMAL_STACK_SIZE)
+#define TASK_CAPSENSE_STACK_SIZE    (256u)
 #define TASK_LED_STACK_SIZE         (configMINIMAL_STACK_SIZE)
 
 /* Queue lengths of message queues used in this project */
@@ -126,6 +127,7 @@ int main(void)
  
     for(;;)
     {
+
     }
 }
 

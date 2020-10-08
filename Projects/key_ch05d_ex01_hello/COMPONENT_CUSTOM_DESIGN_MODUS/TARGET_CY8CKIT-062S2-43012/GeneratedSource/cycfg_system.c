@@ -4,10 +4,10 @@
 * Description:
 * System configuration
 * This file was automatically generated and should not be modified.
-* Tools Package 2.1.0.1266
-* psoc6pdl 1.6.0.4266
-* personalities_2.0 2.0.0.0
-* udd 1.2.0.370
+* Tools Package 2.2.0.2703
+* latest-v2.X 2.0.0.6211
+* personalities 3.0.0.0
+* udd 3.0.0.562
 *
 ********************************************************************************
 * Copyright 2020 Cypress Semiconductor Corporation
@@ -43,11 +43,26 @@
 #define CY_CFG_SYSCLK_ILO_HIBERNATE true
 #define CY_CFG_SYSCLK_IMO_ENABLED 1
 #define CY_CFG_SYSCLK_CLKLF_ENABLED 1
+#define CY_CFG_SYSCLK_CLKPATH0_ENABLED 1
+#define CY_CFG_SYSCLK_CLKPATH0_SOURCE CY_SYSCLK_CLKPATH_IN_IMO
+#define CY_CFG_SYSCLK_CLKPATH0_SOURCE_NUM 0UL
+#define CY_CFG_SYSCLK_CLKPATH1_ENABLED 1
+#define CY_CFG_SYSCLK_CLKPATH1_SOURCE CY_SYSCLK_CLKPATH_IN_IMO
+#define CY_CFG_SYSCLK_CLKPATH1_SOURCE_NUM 0UL
+#define CY_CFG_SYSCLK_CLKPATH2_ENABLED 1
+#define CY_CFG_SYSCLK_CLKPATH2_SOURCE CY_SYSCLK_CLKPATH_IN_IMO
+#define CY_CFG_SYSCLK_CLKPATH2_SOURCE_NUM 0UL
 #define CY_CFG_SYSCLK_CLKPATH3_ENABLED 1
 #define CY_CFG_SYSCLK_CLKPATH3_SOURCE CY_SYSCLK_CLKPATH_IN_IMO
 #define CY_CFG_SYSCLK_CLKPATH3_SOURCE_NUM 0UL
+#define CY_CFG_SYSCLK_CLKPATH4_ENABLED 1
+#define CY_CFG_SYSCLK_CLKPATH4_SOURCE CY_SYSCLK_CLKPATH_IN_IMO
+#define CY_CFG_SYSCLK_CLKPATH4_SOURCE_NUM 0UL
+#define CY_CFG_SYSCLK_CLKPATH5_ENABLED 1
+#define CY_CFG_SYSCLK_CLKPATH5_SOURCE CY_SYSCLK_CLKPATH_IN_IMO
+#define CY_CFG_SYSCLK_CLKPATH5_SOURCE_NUM 0UL
 #define CY_CFG_SYSCLK_CLKPERI_ENABLED 1
-#define CY_CFG_SYSCLK_CLKPERI_DIVIDER 1
+#define CY_CFG_SYSCLK_CLKPERI_DIVIDER 0
 #define CY_CFG_SYSCLK_CLKSLOW_ENABLED 1
 #define CY_CFG_SYSCLK_CLKSLOW_DIVIDER 0
 #define CY_CFG_PWR_ENABLED 1
@@ -62,10 +77,50 @@
 	static cy_stc_pra_system_config_t srss_0_clock_0_secureConfig;
 #endif //defined (CY_DEVICE_SECURE) && (CY_CPU_CORTEX_M4)
 #if defined (CY_USING_HAL)
+	const cyhal_resource_inst_t srss_0_clock_0_pathmux_0_obj = 
+	{
+		.type = CYHAL_RSC_CLKPATH,
+		.block_num = 0U,
+		.channel_num = 0U,
+	};
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	const cyhal_resource_inst_t srss_0_clock_0_pathmux_1_obj = 
+	{
+		.type = CYHAL_RSC_CLKPATH,
+		.block_num = 1U,
+		.channel_num = 0U,
+	};
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	const cyhal_resource_inst_t srss_0_clock_0_pathmux_2_obj = 
+	{
+		.type = CYHAL_RSC_CLKPATH,
+		.block_num = 2U,
+		.channel_num = 0U,
+	};
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
 	const cyhal_resource_inst_t srss_0_clock_0_pathmux_3_obj = 
 	{
 		.type = CYHAL_RSC_CLKPATH,
 		.block_num = 3U,
+		.channel_num = 0U,
+	};
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	const cyhal_resource_inst_t srss_0_clock_0_pathmux_4_obj = 
+	{
+		.type = CYHAL_RSC_CLKPATH,
+		.block_num = 4U,
+		.channel_num = 0U,
+	};
+#endif //defined (CY_USING_HAL)
+#if defined (CY_USING_HAL)
+	const cyhal_resource_inst_t srss_0_clock_0_pathmux_5_obj = 
+	{
+		.type = CYHAL_RSC_CLKPATH,
+		.block_num = 5U,
 		.channel_num = 0U,
 	};
 #endif //defined (CY_USING_HAL)
@@ -535,7 +590,7 @@ __WEAK void cycfg_ClockStartupError(uint32_t error)
 	    #endif /* CY_CFG_SYSCLK_ALTHF_BLE_ECO_TIME */
 	 
 	    #ifdef CY_CFG_SYSCLK_ALTHF_BLE_ECO_FREQ
-	        secure_config->altHFfreq = CY_CFG_SYSCLK_ALTHF_BLE_ECO_FREQ;
+	        secure_config->altHFclkFreq = CY_CFG_SYSCLK_ALTHF_BLE_ECO_FREQ;
 	    #endif /* CY_CFG_SYSCLK_ALTHF_BLE_ECO_FREQ */
 	 
 	    #ifdef CY_CFG_SYSCLK_ALTHF_BLE_ECO_CLK_DIV
@@ -576,15 +631,45 @@ __WEAK void cycfg_ClockStartupError(uint32_t error)
 	}
 #endif //((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
 #if ((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+	__STATIC_INLINE void Cy_SysClk_ClkPath0Init()
+	{
+	    Cy_SysClk_ClkPathSetSource(0U, CY_CFG_SYSCLK_CLKPATH0_SOURCE);
+	}
+#endif //((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+#if ((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+	__STATIC_INLINE void Cy_SysClk_ClkPath1Init()
+	{
+	    Cy_SysClk_ClkPathSetSource(1U, CY_CFG_SYSCLK_CLKPATH1_SOURCE);
+	}
+#endif //((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+#if ((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+	__STATIC_INLINE void Cy_SysClk_ClkPath2Init()
+	{
+	    Cy_SysClk_ClkPathSetSource(2U, CY_CFG_SYSCLK_CLKPATH2_SOURCE);
+	}
+#endif //((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+#if ((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
 	__STATIC_INLINE void Cy_SysClk_ClkPath3Init()
 	{
 	    Cy_SysClk_ClkPathSetSource(3U, CY_CFG_SYSCLK_CLKPATH3_SOURCE);
 	}
 #endif //((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
 #if ((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+	__STATIC_INLINE void Cy_SysClk_ClkPath4Init()
+	{
+	    Cy_SysClk_ClkPathSetSource(4U, CY_CFG_SYSCLK_CLKPATH4_SOURCE);
+	}
+#endif //((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+#if ((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+	__STATIC_INLINE void Cy_SysClk_ClkPath5Init()
+	{
+	    Cy_SysClk_ClkPathSetSource(5U, CY_CFG_SYSCLK_CLKPATH5_SOURCE);
+	}
+#endif //((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
+#if ((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
 	__STATIC_INLINE void Cy_SysClk_ClkPeriInit()
 	{
-	    Cy_SysClk_ClkPeriSetDivider(1U);
+	    Cy_SysClk_ClkPeriSetDivider(0U);
 	}
 #endif //((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
 #if ((!CY_CPU_CORTEX_M4) || (!defined(CY_DEVICE_SECURE)))
@@ -963,6 +1048,26 @@ void init_cycfg_system(void)
 	
 
 #if defined (CY_USING_HAL)
+	cyhal_hwmgr_reserve(&srss_0_clock_0_pathmux_0_obj);
+#endif //defined (CY_USING_HAL)
+
+#if defined (CY_USING_HAL)
+	cyhal_hwmgr_reserve(&srss_0_clock_0_pathmux_1_obj);
+#endif //defined (CY_USING_HAL)
+
+#if defined (CY_USING_HAL)
+	cyhal_hwmgr_reserve(&srss_0_clock_0_pathmux_2_obj);
+#endif //defined (CY_USING_HAL)
+
+#if defined (CY_USING_HAL)
 	cyhal_hwmgr_reserve(&srss_0_clock_0_pathmux_3_obj);
+#endif //defined (CY_USING_HAL)
+
+#if defined (CY_USING_HAL)
+	cyhal_hwmgr_reserve(&srss_0_clock_0_pathmux_4_obj);
+#endif //defined (CY_USING_HAL)
+
+#if defined (CY_USING_HAL)
+	cyhal_hwmgr_reserve(&srss_0_clock_0_pathmux_5_obj);
 #endif //defined (CY_USING_HAL)
 }

@@ -4,10 +4,10 @@
 * Description:
 * Establishes all necessary connections between hardware elements.
 * This file was automatically generated and should not be modified.
-* Tools Package 2.1.0.1266
-* psoc6pdl 1.6.0.4266
-* personalities_2.0 2.0.0.0
-* udd 1.2.0.370
+* Tools Package 2.2.0.2703
+* latest-v2.X 2.0.0.6211
+* personalities 3.0.0.0
+* udd 3.0.0.562
 *
 ********************************************************************************
 * Copyright 2020 Cypress Semiconductor Corporation
@@ -36,17 +36,17 @@ extern "C" {
 #include "cycfg_notices.h"
 void init_cycfg_routing(void);
 #define init_cycfg_connectivity() init_cycfg_routing()
-#define ioss_0_port_1_pin_0_HSIOM HSIOM_SEL_AMUXB
+#define ioss_0_port_1_pin_0_HSIOM HSIOM_SEL_AMUXA
 #define ioss_0_port_7_pin_1_HSIOM HSIOM_SEL_AMUXA
-#define ioss_0_port_7_pin_2_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_7_pin_7_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_1_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_2_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_3_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_4_HSIOM HSIOM_SEL_AMUXB
-#define ioss_0_port_8_pin_5_HSIOM HSIOM_SEL_AMUXB
+#define ioss_0_port_7_pin_2_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_7_pin_7_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_1_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_2_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_3_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_4_HSIOM HSIOM_SEL_AMUXA
+#define ioss_0_port_8_pin_5_HSIOM HSIOM_SEL_AMUXA
 #define ioss_0_port_8_pin_6_HSIOM HSIOM_SEL_AMUXA
-#define ioss_0_port_8_pin_7_HSIOM HSIOM_SEL_AMUXB
+#define ioss_0_port_8_pin_7_HSIOM HSIOM_SEL_AMUXA
 
 #if defined(__cplusplus)
 }
