@@ -26,7 +26,7 @@ The class materials have links to many resources, including some if not all the 
 
 * [ModusToolbox web page](https://www.cypress.com/products/modustoolbox-software-environment) on Cypress.com
 
-* [ModusToolbox community](https://community.cypress.com/community/modustoolbox)
+* [ModusToolbox community](https://community.cypress.com/t5/ModusToolbox/ct-p/ModusToolbox)
 
 * [ModusToolbox User Guide](https://www.cypress.com/ModusToolboxUserGuide)
 
