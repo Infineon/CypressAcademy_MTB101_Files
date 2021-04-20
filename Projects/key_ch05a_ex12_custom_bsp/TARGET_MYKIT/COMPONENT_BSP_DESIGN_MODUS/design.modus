@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Design version="12" xmlns="http://cypress.com/xsd/cydesignfile_v3">
-    <ToolInfo version="2.2.0.2801"/>
+    <ToolInfo version="2.3.0.4276"/>
     <Devices>
         <Device mpn="CY8C624ABZI-S2D44">
             <BlockConfig>
@@ -152,27 +152,6 @@
                 <Block location="ioss[0].port[12].pin[3]">
                     <Alias value="CYBSP_SPI_CS"/>
                     <Alias value="CYBSP_D10"/>
-                </Block>
-                <Block location="ioss[0].port[12].pin[4]">
-                    <Alias value="CYBSP_SDHC_CMD"/>
-                </Block>
-                <Block location="ioss[0].port[12].pin[5]">
-                    <Alias value="CYBSP_SDHC_CLK"/>
-                </Block>
-                <Block location="ioss[0].port[13].pin[0]">
-                    <Alias value="CYBSP_SDHC_IO0"/>
-                </Block>
-                <Block location="ioss[0].port[13].pin[1]">
-                    <Alias value="CYBSP_SDHC_IO1"/>
-                </Block>
-                <Block location="ioss[0].port[13].pin[2]">
-                    <Alias value="CYBSP_SDHC_IO2"/>
-                </Block>
-                <Block location="ioss[0].port[13].pin[3]">
-                    <Alias value="CYBSP_SDHC_IO3"/>
-                </Block>
-                <Block location="ioss[0].port[13].pin[7]">
-                    <Alias value="CYBSP_SDHC_DETECT"/>
                 </Block>
                 <Block location="ioss[0].port[1].pin[0]">
                     <Alias value="CYBSP_CSD_RX"/>
@@ -509,15 +488,9 @@
                         <Param id="divider" value="1"/>
                     </Personality>
                 </Block>
-                <Block location="srss[0].clock[0].fll[0]">
-                    <Personality template="mxs40fll" version="2.0">
-                        <Param id="configuration" value="auto"/>
-                        <Param id="desiredFrequency" value="100.000"/>
-                    </Personality>
-                </Block>
                 <Block location="srss[0].clock[0].hfclk[0]">
                     <Personality template="mxs40hfclk" version="1.1">
-                        <Param id="sourceClockNumber" value="0"/>
+                        <Param id="sourceClockNumber" value="1"/>
                         <Param id="divider" value="1"/>
                     </Personality>
                 </Block>
@@ -568,10 +541,18 @@
                 </Block>
                 <Block location="srss[0].clock[0].periclk[0]">
                     <Personality template="mxs40periclk" version="1.0">
-                        <Param id="divider" value="1"/>
+                        <Param id="divider" value="2"/>
                     </Personality>
                 </Block>
                 <Block location="srss[0].clock[0].pll[0]">
+                    <Personality template="mxs40pll" version="2.0">
+                        <Param id="lowFrequencyMode" value="false"/>
+                        <Param id="configuration" value="auto"/>
+                        <Param id="desiredFrequency" value="144.000"/>
+                        <Param id="optimization" value="MinPower"/>
+                    </Personality>
+                </Block>
+                <Block location="srss[0].clock[0].pll[1]">
                     <Personality template="mxs40pll" version="2.0">
                         <Param id="lowFrequencyMode" value="false"/>
                         <Param id="configuration" value="auto"/>

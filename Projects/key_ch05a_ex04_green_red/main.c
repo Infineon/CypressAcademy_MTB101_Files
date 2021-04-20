@@ -49,7 +49,10 @@ int main(void)
 
     /* Initialize the device and board peripherals */
     result = cybsp_init() ;
-    CY_ASSERT(result == CY_RSLT_SUCCESS);
+    if (result != CY_RSLT_SUCCESS)
+    {
+        CY_ASSERT(0);
+    }
 
     __enable_irq();
 
@@ -60,7 +63,7 @@ int main(void)
     {
         cyhal_gpio_toggle(CYBSP_LED_RGB_GREEN);
         cyhal_gpio_toggle(CYBSP_LED_RGB_RED);
-        Cy_SysLib_Delay(500);
+        cyhal_system_delay_ms(500);
     }
 }
 

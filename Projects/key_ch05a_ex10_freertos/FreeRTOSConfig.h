@@ -95,7 +95,7 @@ extern void vApplicationSleep( uint32_t xExpectedIdleTime );
 #define configENABLE_MPU							0
 #define configENABLE_TRUSTZONE						0
 #define configSUPPORT_DYNAMIC_ALLOCATION			1
-#define configSUPPORT_STATIC_ALLOCATION				0
+#define configSUPPORT_STATIC_ALLOCATION				1
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS     16
 #define configUSE_NEWLIB_REENTRANT 					1
 
