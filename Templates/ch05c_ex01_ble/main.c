@@ -113,7 +113,7 @@ int main(void)
     printf("**********Application Start*****************\n");
 
     /* Configure platform specific settings for the BT device */
-    cybt_platform_config_init(&cybsp_platform_cfg);
+    cybt_platform_config_init(&cybsp_bt_platform_cfg);
 
     /* Initialize stack and register the callback function */
     result=wiced_bt_stack_init (app_bt_management_callback, &wiced_bt_cfg_settings);
@@ -158,18 +158,9 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 			{
 				printf( "Bluetooth Enabled\n" );
 
-				/* Generate a random local Bluetooth Device Address and print it out */
+				/* Set the local BDA from the value in the configurator and print it */
 				wiced_bt_device_address_t bda = {0};
-				cyhal_trng_t trng_obj;
-				cyhal_trng_init(&trng_obj);
-				bda[0] = (uint8_t) cyhal_trng_generate(&trng_obj);
-				bda[1] = (uint8_t) cyhal_trng_generate(&trng_obj);
-				bda[2] = (uint8_t) cyhal_trng_generate(&trng_obj);
-				bda[3] = (uint8_t) cyhal_trng_generate(&trng_obj);
-				bda[4] = (uint8_t) cyhal_trng_generate(&trng_obj);
-				bda[5] = (uint8_t) cyhal_trng_generate(&trng_obj);
-				cyhal_trng_free(&trng_obj);
-				wiced_bt_set_local_bdaddr( bda, BLE_ADDR_RANDOM);
+				wiced_bt_set_local_bdaddr((uint8_t *)cy_bt_device_address, BLE_ADDR_PUBLIC);
 				wiced_bt_dev_read_local_addr( bda );
 				printf( "Local Bluetooth Device Address: ");
 				ble_address_print(bda);
@@ -184,7 +175,7 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 			    /* TODO Ex 01: Initialize the GATT database */
 			    
 
-			    printf("GATT database initiliazation status: %s \n",gatt_status_name(status));
+			    printf("GATT database initialization status: %s \n",gatt_status_name(status));
 
 
 				/* TODO Ex 01: Enable/disable pairing */

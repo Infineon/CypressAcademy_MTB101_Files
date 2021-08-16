@@ -75,7 +75,6 @@
 /* Logical Start of Emulated EEPROM and location of structure elements. */
 /* Sizeof can't be used because of padding in the structure */
 #define LOGICAL_EEPROM_START    (0u)
-#define EEPROM_LOCAL_BDA		((void *)&(bondinfo.local_bda) - (void *)&bondinfo)
 #define EEPROM_REMOTE_BDA		((void *)&(bondinfo.remote_bda) - (void *)&bondinfo)
 #define EEPROM_CCCD				((void *)&(bondinfo.cccd) - (void *)&bondinfo)
 #define EEPROM_IDENTITY_KEYS	((void *)&(bondinfo.identity_keys) - (void *)&bondinfo)
@@ -138,7 +137,6 @@ bool bonded = WICED_FALSE;		// State of the peripheral - bonded or bonding
 /* Structure to store info that goes into EEPROM - it holds the remote BDA, CCCD value, remote keys and local keys */
 struct bondinfo
 {
-	wiced_bt_device_address_t		local_bda;		/* BD address of local host - randomly generated on 1st power up */
 	wiced_bt_device_address_t		remote_bda;		/* BD address of remote */
 	uint8_t							cccd[2];
 	wiced_bt_local_identity_keys_t 	identity_keys;
@@ -302,35 +300,12 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 			{
 				printf( "Bluetooth Enabled\n" );
 
-				/* If the local BDA is all zeros, generate a random address and store it to EEPROM.
-				 * This is only done at first power up after programming. It will not be changed until
-				 * the device is re-programmed. */
-				if(0 == memcmp( &(bondinfo.local_bda), zero_bda, sizeof(zero_bda)))
-				{
-					cyhal_trng_t trng_obj;
-					cyhal_trng_init(&trng_obj);
-					bondinfo.local_bda[0] = (uint8_t) cyhal_trng_generate(&trng_obj);
-					bondinfo.local_bda[1] = (uint8_t) cyhal_trng_generate(&trng_obj);
-					bondinfo.local_bda[2] = (uint8_t) cyhal_trng_generate(&trng_obj);
-					bondinfo.local_bda[3] = (uint8_t) cyhal_trng_generate(&trng_obj);
-					bondinfo.local_bda[4] = (uint8_t) cyhal_trng_generate(&trng_obj);
-					bondinfo.local_bda[5] = (uint8_t) cyhal_trng_generate(&trng_obj);
-					cyhal_trng_free(&trng_obj);
-
-		        	eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_LOCAL_BDA, &(bondinfo.local_bda), sizeof(bondinfo.local_bda), &Em_EEPROM_context);
-					if(CY_EM_EEPROM_SUCCESS == eepromReturnValue)
-					{
-			        	printf("Local BDA saved to EERPROM\n");
-					}
-					else
-					{
-						printf("EEROM Write Error: %d\n", eepromReturnValue);
-					}
-				}
-				/* Set the local BDA and print it out */
-				wiced_bt_set_local_bdaddr( bondinfo.local_bda, BLE_ADDR_RANDOM);
+				/* Set the local BDA from the value in the configurator and print it */
+				wiced_bt_device_address_t bda = {0};
+				wiced_bt_set_local_bdaddr((uint8_t *)cy_bt_device_address, BLE_ADDR_PUBLIC);
+				wiced_bt_dev_read_local_addr( bda );
 				printf( "Local Bluetooth Device Address: ");
-				print_ble_address(bondinfo.local_bda);
+				print_ble_address(bda);
 				printf( "\n");
 
 				/* If a bonded device was previously stored, copy in the keys and add them to the address resolution database */
@@ -349,7 +324,7 @@ static wiced_result_t app_bt_management_callback( wiced_bt_management_evt_t even
 
 			    /* Initialize the GATT database */
 			    wiced_bt_gatt_db_init( gatt_database, gatt_database_len, NULL );
-			    printf("GATT database initiliazation status: %s \n",gatt_status_name(status));
+			    printf("GATT database initialization status: %s \n",gatt_status_name(status));
 
 				/* Enable/disable pairing */
 			    wiced_bt_set_pairable_mode( WICED_TRUE, WICED_FALSE ); /* Enable pairing */
@@ -875,9 +850,9 @@ static void uart_task(void *pvParameters)
 					wiced_bt_dev_remove_device_from_address_resolution_db (&(bondinfo.link_keys));
 					printf( "Removed device from address resolution database\n");
 
-					/* Remove bonding information from EERPOM (keep the local host BDA intact) */
+					/* Remove bonding information from EERPOM */
 					memset( &bondinfo, 0, sizeof(bondinfo) );
-					eepromReturnValue = Cy_Em_EEPROM_Write(EEPROM_REMOTE_BDA, &(bondinfo.remote_bda), (sizeof(bondinfo) - sizeof(bondinfo.local_bda)), &Em_EEPROM_context);
+					eepromReturnValue = Cy_Em_EEPROM_Write(LOGICAL_EEPROM_START, &bondinfo, sizeof(bondinfo), &Em_EEPROM_context);
 					if(CY_EM_EEPROM_SUCCESS == eepromReturnValue)
 					{
 						printf( "Erased EEPROM\n");

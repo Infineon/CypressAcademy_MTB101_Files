@@ -1,35 +1,36 @@
-# ModusToolbox_101
+# Cypress Academy ModusToolbox 101
 
-Recently, while teaching a group of people how to use ModusToolbox, Alan Hawse walked up behind one of the students. The student was literally giggling with glee as he built the IoT examples. "I reflected on the ocean of technology inside of this toolbox: Wi-Fi, CapSense, Bluetooth, PSoC, PDL, Mbed, FreeRTOS, HAL, drivers, middleware and on and on. But, none of those things can replace the joy that comes with a great user experience. This experience reflects the remarkable set of tools that we built."
+## What is this Class?
 
-This class is a survey of the Cypress IoT development platform ModusToolbox. The learning objective is to introduce you to all the tools in ModusToolbox and help you develop some familiarity with using them. The class is “a mile wide and an inch deep.” This should enable you to understand the scope of the Cypress development ecosystem and teach you where to find “everything.”
+This class is a survey of the Cypress IoT development platform ModusToolbox 2.x.  The learning objective is to introduce you to all the tools in ModusToolbox and help you develop some familiarity with using them.  The class is “a mile wide and an inch deep.”  This should enable you to understand the scope of the Cypress development ecosystem and teach you where to find “everything.”
 
-The PDF files in this repository are used in the classroom course. This class touches on PSoC 6, Wi-Fi, Bluetooth, FreeRTOS, Mbed OS, and Amazon Web Services, but it is not an in-depth study of any of those topics. You can learn more by taking PSoC 101, Cypress Wi-Fi 101 and Cypress Bluetooth 101.
+This class will touch on PSoC 6, Wi-Fi, Bluetooth, FreeRTOS, Mbed OS, and Amazon Web Services, but it is not an in-depth study of any of those topics.  You can learn more by taking PSoC 101, Cypress Wi-Fi 101 and Cypress Bluetooth 101.
 
-To develop applications using these tools, you need to have good C-programming skills as most of the development effort with these types of chips is spent writing programs. Your skills should include:
 
- * C Control Structure
+## References
 
- * C Variables (Data)
+- [ModusToolbox Software Environment website](https://www.cypress.com/products/modustoolbox-software-environment)
+- [Cypress Community](https://community.cypress.com/welcome)
+- [Cypress Amazon FreeRTOS](https://community.cypress.com/community/modustoolbox-amazon-freertos-sdk)
+- [Cypress Bluetooth](https://community.cypress.com/community/modustoolbox-bt-sdk)
+- [ModusToolbox Examples](https://github.com/cypresssemiconductorco/Code-Examples-for-ModusToolbox-Software)
+- [Mbed OS Examples](https://github.com/ARMmbed)
 
- * Multi-file programs
 
- * Linking
+## Acknowledgements
 
- * RTOS
+First and foremost.  Thank you CJ, Jennifer, Vaira, Ian, Mark, Greg, Misha, Mitesh and Chris.  Creating a book like this is an act of insanity.  But we did it together. 
 
- * IoT Frameworks – MQTT, HTTP
+Recently, while teaching a group of people how to use ModusToolbox, I walked up behind one of the students.  He was literally giggling with glee as he built the IoT examples.  I reflected on the ocean of technology inside of this toolbox: Wi-Fi, CapSense, Bluetooth, PSoC, PDL, Mbed, FreeRTOS, HAL, drivers, middleware and on and on.  But, none of those things can replace the joy that comes with a great user experience.  This experience reflects the remarkable set of tools that we built.
 
- * Bluetooth Low Energy
+As we look into the future, the Infineon future, I can say with no uncertainty, that ModusToolbox is a platform that will enable us to combine the best of both companies.  With this platform we can win together!
 
-The class materials have links to many resources, including some if not all the links below (along with many others):
+My father always told me that it was better to be lucky than good.  This idea always struck me as specious even somewhat offensive.  But today, as I sit here and write this dedication, I feel with certainty that he was right.  Every day of my life I have been given the gift of working with these remarkable people in this remarkable company.  You are my brothers and sisters, my family and I feel so blessed, so incredibly lucky to have each and every one of you in my life.
 
-* [ModusToolbox web page](https://www.cypress.com/products/modustoolbox-software-environment) on Cypress.com
+Thank you to each and every one of you.  Without you none of this is possible.
 
-* [ModusToolbox community](https://community.cypress.com/t5/ModusToolbox/ct-p/ModusToolbox)
 
-* [ModusToolbox User Guide](https://www.cypress.com/ModusToolboxUserGuide)
-
-In addition, you can use this page to find code example repositories here on GitHub:
-
-* [ModusToolbox Code Examples](https://github.com/cypresssemiconductorco/Code-Examples-for-ModusToolbox-Software)
+Alan Hawse
+Act with integrity: Learn, Teach, Build.
+Kentucky
+November 2019
