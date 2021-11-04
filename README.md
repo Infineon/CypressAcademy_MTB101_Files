@@ -1,5 +1,7 @@
 # Cypress Academy ModusToolbox 101
 
+**<span style="color:red">This class is only maintained through ModusToolbox 2.3. It is recommended that you visit https://github.com/Infineon/training-modustoolbox for a list of more recent classes</span>**
+
 ## What is this Class?
 
 This class is a survey of the Cypress IoT development platform ModusToolbox 2.x.  The learning objective is to introduce you to all the tools in ModusToolbox and help you develop some familiarity with using them.  The class is “a mile wide and an inch deep.”  This should enable you to understand the scope of the Cypress development ecosystem and teach you where to find “everything.”
